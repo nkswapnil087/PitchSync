@@ -1,25 +1,36 @@
 # PitchSync Frontend Scope
 
-PitchSync is currently a frontend-only academic DBMS project milestone. It demonstrates a substantial portion of the planned product interface without claiming completion of the full system.
+The PitchSync frontend is complete for the product areas supported by the final ER, finalized relational schema, and approved role-based product flow.
 
 ## Completion snapshot
 
 | Measure | Status |
 | --- | --- |
-| Product screens implemented | 15 |
-| Planned demonstration scope | 22 screens |
-| Approximate current frontend completion | 68% |
-| Temporary scaffolding screens | 0 |
-| Backend completion | 0% |
-| Database integration | Deferred |
+| Product routes implemented | 25 |
+| Role dashboards implemented | 6 of 6 |
+| Core domain registries and details | Implemented |
+| Responsive application shell | Implemented |
+| Role guards and sign-out | Implemented |
+| Fabricated business datasets | None |
+| Backend persistence | Deferred |
 | Real authentication | Deferred |
 
-The 15 product screens comprise one sign-in screen, six role dashboards, three player-management screens, team management, tournament management, match details, the complaint registry, and integrity case details. Role selection is part of the sign-in form, and one role remains active for the browser session.
+## Implemented product areas
 
-## Intentionally deferred
+- Role-aware sign-in and six dedicated dashboards
+- Player registry, registration, profile, and edit views
+- Team registry, details, roster, and match relationships
+- Tournament registry, details, sponsors, participating teams, and matches
+- Match registry and details with batting, bowling, and fielding performance sections
+- Player performance registry and details with career summaries
+- Complaint registry and details
+- Integrity case registry and details with complaint source, involved players, assigned investigation team, violated rules, and evidence
+- Rulebook registry and details
 
-Deferred work includes real authentication and authorization, database integration, user and permission editors, system and audit logs, external service configuration, reports, notifications, evidence and document management, fitness and injury workflows, training and selection workflows, fixture authoring, results entry, file uploads, exports, and mobile layouts.
+Relational tables are represented as useful sections inside entity pages rather than exposed as standalone database-table modules.
 
-Deferred sidebar items remain visible as non-interactive entries. The product interface uses neutral record-availability language; implementation and completion details are confined to project documentation.
+## Deliberately deferred
 
-Route and module statuses are maintained in `src/config/module-status.ts`; this document reflects that configuration.
+Real authentication and authorization, API persistence, Oracle connectivity, reports and exports, notifications, file storage, and other backend-dependent actions remain later-phase work. `USER_ACCOUNT`, `PLAYER_FITNESS`, and `AUDIT_LOG` are not treated as first-class frontend domains because they are absent from the authoritative ER/schema.
+
+Deferred navigation is non-interactive and has no route. Route and module status is centralized in `src/config/module-status.ts`; access rules are centralized in `src/config/route-access.ts`.

@@ -110,14 +110,14 @@ function PlayerForm({ mode }: { mode: PlayerFormMode }) {
           <FormSection title="Review entered details" description="Confirm the values before completing validation.">
             <div className="space-y-7">
               <DetailGrid columns={4}>
-                <DetailField label="First name" value={values.firstName || "â€”"} />
-                <DetailField label="Last name" value={values.lastName || "â€”"} />
-                <DetailField label="Date of birth" value={values.dateOfBirth || "â€”"} />
-                <DetailField label="Phone" value={values.phone || "â€”"} />
-                <DetailField label="Player role" value={values.playerRole || "â€”"} />
-                <DetailField label="Gender" value={values.gender || "â€”"} />
-                <DetailField label="Education" value={values.education || "â€”"} />
-                <DetailField label="Achievements" value={values.achievements || "â€”"} />
+                <DetailField label="First name" value={values.firstName || "—"} />
+                <DetailField label="Last name" value={values.lastName || "—"} />
+                <DetailField label="Date of birth" value={values.dateOfBirth || "—"} />
+                <DetailField label="Phone" value={values.phone || "—"} />
+                <DetailField label="Player role" value={values.playerRole || "—"} />
+                <DetailField label="Gender" value={values.gender || "—"} />
+                <DetailField label="Education" value={values.education || "—"} />
+                <DetailField label="Achievements" value={values.achievements || "—"} />
               </DetailGrid>
               <div className="flex gap-3 rounded-[10px] border border-[var(--border-strong)] bg-[var(--bd-green-soft)] p-4 text-sm text-[var(--bd-green-deep)]"><ShieldCheck className="size-5 shrink-0" /><p>Values are checked for completeness and field validity before you continue.</p></div>
             </div>

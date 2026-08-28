@@ -2,9 +2,10 @@
   "name": "pitchsync",
   "version": "0.1.0",
   "private": true,
-  "description": "Frontend milestone for the PitchSync academic DBMS project",
+  "description": "Frontend for the PitchSync cricket administration and integrity platform",
   "scripts": {
     "dev": "next dev",
+    "start": "next start",
     "build": "next build",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit"
