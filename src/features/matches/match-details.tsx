@@ -29,7 +29,7 @@ export function MatchDetails() {
               <SectionCard title="Match information" icon={MapPin}><DetailGrid columns={2}><DetailField label="Match ID" /><DetailField label="Tournament" /><DetailField label="Match date" /><DetailField label="Venue" /></DetailGrid></SectionCard>
               <SectionCard title="Participating teams" icon={UsersRound}><DataTableShell minWidth={480} columns={["Team", "Team ID", "Category", "Franchise owner", "Actions"]} emptyTitle="No participating teams found" /></SectionCard>
             </section>
-            <SectionCard title="Operational summary" description="Optional match state and outcome presentation." icon={ClipboardList}><DetailGrid columns={2}><DetailField label="Match state" /><DetailField label="Result summary" /></DetailGrid></SectionCard>
+            <SectionCard title="Operational summary" description="Current match state and any recorded outcome." icon={ClipboardList}><DetailGrid columns={2}><DetailField label="Match state" /><DetailField label="Result summary" /></DetailGrid></SectionCard>
           </div>
         </TabsContent>
         <TabsContent value="batting"><SectionCard title="Batting performance" icon={BarChart3}><DataTableShell columns={["Player", "Runs", "Balls faced", "Strike rate", "Dismissal type", "Actions"]} emptyTitle="No batting performances found" /></SectionCard></TabsContent>
