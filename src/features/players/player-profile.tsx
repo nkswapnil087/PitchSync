@@ -1,20 +1,89 @@
 "use client";
 
-import { Activity, CircleUserRound, FileText, Medal, UserRound } from "lucide-react";
+import Link from "next/link";
+import { BookOpenCheck, GraduationCap, Medal, Pencil, UserRound, UsersRound } from "lucide-react";
 import { DetailField } from "@/components/data-display/detail-field";
 import { DetailGrid } from "@/components/data-display/detail-grid";
+import { EntityHeader } from "@/components/data-display/entity-header";
 import { SectionCard } from "@/components/data-display/section-card";
-import { StatusBadge } from "@/components/data-display/status-badge";
-import { InformationUnavailable } from "@/components/feedback/information-unavailable";
-import { UnavailableFeature } from "@/components/feedback/unavailable-feature";
+import { DataTableShell } from "@/components/data-display/data-table-shell";
+import { EmptyState } from "@/components/feedback/empty-state";
 import { TabNavigation } from "@/components/navigation/tab-navigation";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { useDemoAuth } from "@/features/demo-auth";
 
-const tabs = [{ value: "overview", label: "Overview" }, { value: "career", label: "Career Records" }, { value: "fitness", label: "Fitness & Availability" }, { value: "documents", label: "Documents" }, { value: "activity", label: "Activity Log" }] as const;
+const tabs = [
+  { value: "overview", label: "Overview" },
+  { value: "teams", label: "Team Associations" },
+  { value: "career", label: "Career Records" },
+  { value: "achievements", label: "Achievements" },
+] as const;
 
-const PersonalInformation = () => <DetailGrid><DetailField label="Full name" /><DetailField label="Date of birth" /><DetailField label="Nationality" /><DetailField label="National ID" /><DetailField label="Contact email" /><DetailField label="Phone" /></DetailGrid>;
-const PlayingInformation = () => <DetailGrid><DetailField label="Primary role" /><DetailField label="Batting style" /><DetailField label="Bowling style" /><DetailField label="Preferred position" /><DetailField label="Jersey number" /><DetailField label="Contract tier" /></DetailGrid>;
+export function PlayerProfile({ playerId }: { playerId: string }) {
+  const { role } = useDemoAuth();
+  const canEdit = role === "super-admin" || role === "board-admin";
 
-export function PlayerProfile() {
-  return <><header className="rounded-xl border bg-white p-6"><div className="flex items-center gap-5"><div className="grid size-20 place-items-center rounded-full border border-dashed bg-[var(--surface-muted)]"><CircleUserRound className="size-9 text-[var(--bd-green)]" /></div><div className="flex-1"><div className="flex items-center gap-3"><h1 className="heading-font text-3xl font-semibold">Player record</h1><StatusBadge status="No data available" /></div><div className="mt-4 flex gap-8 text-sm"><p><span className="text-[var(--text-muted)]">Registry ID:</span> <strong>—</strong></p><p><span className="text-[var(--text-muted)]">Team:</span> <strong>—</strong></p><p><span className="text-[var(--text-muted)]">Role:</span> <strong>—</strong></p></div></div></div></header><Tabs defaultValue="overview"><TabNavigation tabs={tabs} /><TabsContent value="overview"><div className="space-y-5"><section className="grid grid-cols-2 gap-5"><SectionCard title="Personal Information" icon={UserRound}><PersonalInformation /></SectionCard><SectionCard title="Playing Information" icon={Medal}><PlayingInformation /></SectionCard></section><section className="grid grid-cols-3 gap-5"><SectionCard title="Career Summary" icon={FileText}><DetailGrid columns={2}><DetailField label="Matches" /><DetailField label="Formats" /><DetailField label="Runs" /><DetailField label="Wickets" /></DetailGrid></SectionCard><SectionCard title="Fitness Metrics" icon={Activity}><DetailGrid columns={2}><DetailField label="Fitness score" /><DetailField label="Availability" /><DetailField label="Last assessment" /><DetailField label="Medical status" /></DetailGrid></SectionCard><SectionCard title="Selection Status" icon={Medal}><DetailGrid columns={2}><DetailField label="Current status" /><DetailField label="Effective date" /><DetailField label="Squad" /><DetailField label="Notes" /></DetailGrid></SectionCard></section></div></TabsContent><TabsContent value="career"><InformationUnavailable title="No career records available" /></TabsContent><TabsContent value="fitness"><InformationUnavailable title="No fitness information available" /></TabsContent><TabsContent value="documents"><UnavailableFeature title="No documents available" /></TabsContent><TabsContent value="activity"><UnavailableFeature title="No activity recorded" /></TabsContent></Tabs></>;
+  return (
+    <>
+      <EntityHeader
+        eyebrow="Player registry"
+        title="Player record"
+        referenceLabel="Player reference"
+        actions={canEdit ? <Button asChild variant="outline" size="sm"><Link href={`/players/${encodeURIComponent(playerId)}/edit`}><Pencil />Edit structure</Link></Button> : undefined}
+      >
+        <DetailGrid columns={4}>
+          <DetailField label="Full name" />
+          <DetailField label="Primary role" />
+          <DetailField label="Gender" />
+          <DetailField label="Current team associations" />
+        </DetailGrid>
+      </EntityHeader>
+      <Tabs defaultValue="overview">
+        <TabNavigation tabs={tabs} />
+        <TabsContent value="overview">
+          <div className="space-y-5">
+            <section className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+              <SectionCard title="Personal & contact information" icon={UserRound}>
+                <DetailGrid columns={2}>
+                  <DetailField label="First name" />
+                  <DetailField label="Last name" />
+                  <DetailField label="Date of birth" />
+                  <DetailField label="Phone" />
+                  <DetailField label="Present address" />
+                  <DetailField label="Permanent address" />
+                </DetailGrid>
+              </SectionCard>
+              <SectionCard title="Playing information" icon={Medal}>
+                <DetailGrid columns={2}>
+                  <DetailField label="Player role" />
+                  <DetailField label="Gender" />
+                  <DetailField label="Education" />
+                  <DetailField label="Family background" />
+                </DetailGrid>
+              </SectionCard>
+            </section>
+            <section className="grid grid-cols-1 gap-5 md:grid-cols-3">
+              <SectionCard title="Batting career" icon={BookOpenCheck}><DetailGrid columns={2}><DetailField label="Total runs" /><DetailField label="Average" /><DetailField label="Strike rate" /><DetailField label="Highest score" /></DetailGrid></SectionCard>
+              <SectionCard title="Bowling career" icon={BookOpenCheck}><DetailGrid columns={2}><DetailField label="Wickets" /><DetailField label="Average" /><DetailField label="Best figures" /><DetailField label="Formats" /></DetailGrid></SectionCard>
+              <SectionCard title="Fielding career" icon={BookOpenCheck}><DetailGrid columns={2}><DetailField label="Catches" /><DetailField label="Stumpings" /><DetailField label="Run outs" /><DetailField label="Best match" /></DetailGrid></SectionCard>
+            </section>
+          </div>
+        </TabsContent>
+        <TabsContent value="teams">
+          <SectionCard title="Team membership" description="Teams linked through player-team associations." icon={UsersRound}>
+            <DataTableShell columns={["Team", "Category", "Franchise owner", "Actions"]} emptyTitle="No team associations found" />
+          </SectionCard>
+        </TabsContent>
+        <TabsContent value="career">
+          <SectionCard title="Career records" description="Career summaries by tier and location." icon={GraduationCap}>
+            <DataTableShell columns={["Record ID", "Tier level", "Location type", "Matches played", "Start date", "End date", "Actions"]} emptyTitle="No career records found" />
+          </SectionCard>
+        </TabsContent>
+        <TabsContent value="achievements">
+          <EmptyState title="No achievements recorded" description="No player achievements are available for this record." />
+        </TabsContent>
+      </Tabs>
+    </>
+  );
 }

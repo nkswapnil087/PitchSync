@@ -1,24 +1,47 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Plus, UserRoundSearch } from "lucide-react";
-import { DataTableShell } from "@/components/data-display/data-table-shell";
-import { DataStateView } from "@/components/feedback/data-state-view";
 import { FilterBar } from "@/components/forms/filter-bar";
 import { SearchField } from "@/components/forms/search-field";
-import { Pagination } from "@/components/navigation/pagination";
 import { PageActions } from "@/components/page/page-actions";
 import { PageHeader } from "@/components/page/page-header";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { parseDataStatus } from "@/lib/data-state";
+import { RegistryTable } from "@/features/shared/registry-table";
+import { useRegistryFilters } from "@/features/shared/use-registry-filters";
+import { playerGenders, playerRoles } from "./player-options";
 
-const columns = ["Player", "Registry ID", "Team", "Formats", "Primary role", "Status", "Fitness", "Updated", "Actions"] as const;
+const columns = ["Player", "Registry ID", "Primary role", "Gender", "Phone", "Team associations", "Actions"] as const;
 
 export function PlayerRegistry() {
-  const searchParams = useSearchParams(); const router = useRouter(); const pathname = usePathname();
-  const setFilter = (key: string, value: string) => { const params = new URLSearchParams(searchParams.toString()); if (value && value !== "all") params.set(key, value); else params.delete(key); router.replace(`${pathname}${params.size ? `?${params}` : ""}`); };
-  const state = { status: parseDataStatus(searchParams.get("state"), "empty"), data: [] as readonly never[], message: "No player records found." } as const;
-  return <><PageHeader eyebrow="Player & team management" title="Player registry" description="Search, filter, and review player registry records." actions={<PageActions><Button asChild variant="outline"><Link href="/players/preview">View player profile</Link></Button><Button asChild><Link href="/players/new"><Plus />Add Player</Link></Button></PageActions>} /><FilterBar><SearchField value={searchParams.get("q") ?? ""} onChange={(value) => setFilter("q", value)} placeholder="Search player registry" /><Select value={searchParams.get("status") ?? "all"} onValueChange={(value) => setFilter("status", value)}><SelectTrigger aria-label="Filter by status"><SelectValue placeholder="All statuses" /></SelectTrigger><SelectContent><SelectItem value="all">All statuses</SelectItem><SelectItem value="active">Active</SelectItem><SelectItem value="inactive">Inactive</SelectItem><SelectItem value="unavailable">Unavailable</SelectItem></SelectContent></Select><Select value={searchParams.get("format") ?? "all"} onValueChange={(value) => setFilter("format", value)}><SelectTrigger aria-label="Filter by format"><SelectValue placeholder="All formats" /></SelectTrigger><SelectContent><SelectItem value="all">All formats</SelectItem><SelectItem value="test">Test</SelectItem><SelectItem value="odi">ODI</SelectItem><SelectItem value="t20">T20</SelectItem></SelectContent></Select><Select value={searchParams.get("team") ?? "all"} onValueChange={(value) => setFilter("team", value)}><SelectTrigger aria-label="Filter by team"><SelectValue placeholder="All teams" /></SelectTrigger><SelectContent><SelectItem value="all">All teams</SelectItem></SelectContent></Select></FilterBar><div className="overflow-hidden rounded-xl border bg-white">{state.status === "empty" || state.status === "ready" ? <DataTableShell columns={columns} emptyTitle="No players found" /> : <DataStateView state={state} emptyTitle="No players found" />}<Pagination /></div><div className="flex items-center gap-2 text-xs text-[var(--text-muted)]"><UserRoundSearch className="size-4" /><span>Use the filters to narrow registry records.</span></div></>;
+  const { searchParams, setFilter, state } = useRegistryFilters("No player records found.");
+
+  return (
+    <>
+      <PageHeader
+        eyebrow="People & players"
+        title="Player registry"
+        description="Search and review player identity, playing-role, contact, and team-association records."
+        actions={<PageActions><Button asChild variant="outline"><Link href="/players/record">Open player details</Link></Button><Button asChild><Link href="/players/new"><Plus />Register player</Link></Button></PageActions>}
+      />
+      <FilterBar>
+        <SearchField value={searchParams.get("q") ?? ""} onChange={(value) => setFilter("q", value)} placeholder="Search players" />
+        <Select value={searchParams.get("role") ?? "all"} onValueChange={(value) => setFilter("role", value)}>
+          <SelectTrigger aria-label="Filter by playing role"><SelectValue placeholder="All playing roles" /></SelectTrigger>
+          <SelectContent><SelectItem value="all">All playing roles</SelectItem>{playerRoles.map((role) => <SelectItem key={role} value={role}>{role}</SelectItem>)}</SelectContent>
+        </Select>
+        <Select value={searchParams.get("gender") ?? "all"} onValueChange={(value) => setFilter("gender", value)}>
+          <SelectTrigger aria-label="Filter by gender"><SelectValue placeholder="All gender categories" /></SelectTrigger>
+          <SelectContent><SelectItem value="all">All gender categories</SelectItem>{playerGenders.map((gender) => <SelectItem key={gender.value} value={gender.value}>{gender.label}</SelectItem>)}</SelectContent>
+        </Select>
+        <Select value={searchParams.get("team") ?? "all"} onValueChange={(value) => setFilter("team", value)}>
+          <SelectTrigger aria-label="Filter by team"><SelectValue placeholder="All teams" /></SelectTrigger>
+          <SelectContent><SelectItem value="all">All teams</SelectItem></SelectContent>
+        </Select>
+      </FilterBar>
+      <RegistryTable columns={columns} state={state} emptyTitle="No players found" emptyDescription="No player records match the current filters." />
+      <p className="flex items-center gap-2 text-xs text-[var(--text-muted)]"><UserRoundSearch className="size-4" />Use search and filters to narrow the registry.</p>
+    </>
+  );
 }

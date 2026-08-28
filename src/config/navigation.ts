@@ -1,36 +1,94 @@
 import type { LucideIcon } from "lucide-react";
-import { Activity, Bell, BookOpen, BriefcaseMedical, CalendarDays, ChartNoAxesColumn, ClipboardCheck, Dumbbell, FileBarChart, FileCheck, Gauge, ListChecks, LockKeyhole, Medal, Settings, ShieldAlert, Trophy, UserRound, UserSearch, Users, UsersRound } from "lucide-react";
+import {
+  BookOpen,
+  BriefcaseBusiness,
+  ChartNoAxesColumn,
+  Gauge,
+  Medal,
+  ShieldAlert,
+  Trophy,
+  UserRound,
+  UsersRound,
+} from "lucide-react";
 import type { RoleId } from "@/features/demo-auth/types";
 
-export type NavigationItem = { label: string; href?: string; icon: LucideIcon; disabled?: boolean };
+export type NavigationItem = {
+  label: string;
+  href?: string;
+  icon: LucideIcon;
+  disabled?: boolean;
+};
+
+const players = { label: "Players", href: "/players", icon: UserRound } as const;
+const teams = { label: "Teams", href: "/teams", icon: UsersRound } as const;
+const tournaments = { label: "Tournaments", href: "/tournaments", icon: Trophy } as const;
+const matches = { label: "Matches", href: "/matches", icon: Medal } as const;
+const performance = { label: "Performance", href: "/performance/players", icon: ChartNoAxesColumn } as const;
+const complaints = { label: "Complaints", href: "/integrity/complaints", icon: ShieldAlert } as const;
+const cases = { label: "Cases", href: "/integrity/cases", icon: BriefcaseBusiness } as const;
+const rulebook = { label: "Rulebook", href: "/integrity/rulebook", icon: BookOpen } as const;
 
 export const navigationByRole: Record<RoleId, readonly NavigationItem[]> = {
   "super-admin": [
-    { label: "Dashboard", href: "/super-admin/dashboard", icon: Gauge }, { label: "Players", href: "/players", icon: UserRound }, { label: "Teams", href: "/teams", icon: UsersRound }, { label: "Complaints", href: "/integrity/complaints", icon: ShieldAlert },
-    { label: "Users", icon: Users, disabled: true }, { label: "Roles & Permissions", icon: LockKeyhole, disabled: true }, { label: "System Logs", icon: ListChecks, disabled: true }, { label: "Reports", icon: FileBarChart, disabled: true }, { label: "Settings", icon: Settings, disabled: true },
+    { label: "Dashboard", href: "/super-admin/dashboard", icon: Gauge },
+    players,
+    teams,
+    tournaments,
+    matches,
+    performance,
+    complaints,
+    cases,
+    rulebook,
   ],
   "board-admin": [
-    { label: "Dashboard", href: "/board-admin/dashboard", icon: Gauge }, { label: "Players", href: "/players", icon: UserRound }, { label: "Teams", href: "/teams", icon: UsersRound }, { label: "Tournaments", href: "/tournaments", icon: Trophy }, { label: "Match Details", href: "/matches/preview", icon: Medal },
-    { label: "Fixtures", icon: CalendarDays, disabled: true }, { label: "Career Records", icon: ChartNoAxesColumn, disabled: true }, { label: "Reports", icon: FileBarChart, disabled: true }, { label: "Settings", icon: Settings, disabled: true },
+    { label: "Dashboard", href: "/board-admin/dashboard", icon: Gauge },
+    players,
+    teams,
+    tournaments,
+    matches,
+    performance,
   ],
   "performance-manager": [
-    { label: "Dashboard", href: "/performance/dashboard", icon: Gauge }, { label: "Players", href: "/players", icon: UserRound }, { label: "Teams", href: "/teams", icon: UsersRound }, { label: "Player Profile", href: "/players/preview", icon: FileCheck },
-    { label: "Fitness", icon: Activity, disabled: true }, { label: "Injury Reports", icon: BriefcaseMedical, disabled: true }, { label: "Training", icon: Dumbbell, disabled: true }, { label: "Selection", icon: ClipboardCheck, disabled: true }, { label: "Career Statistics", icon: ChartNoAxesColumn, disabled: true }, { label: "Reports", icon: FileBarChart, disabled: true },
+    { label: "Dashboard", href: "/performance/dashboard", icon: Gauge },
+    players,
+    teams,
+    matches,
+    performance,
   ],
   "match-official": [
-    { label: "Dashboard", href: "/match-official/dashboard", icon: Gauge }, { label: "Match Details", href: "/matches/preview", icon: Medal },
-    { label: "Today’s Fixtures", icon: CalendarDays, disabled: true }, { label: "Upcoming Matches", icon: Trophy, disabled: true }, { label: "Match Summaries", icon: FileCheck, disabled: true }, { label: "Results", icon: ListChecks, disabled: true }, { label: "Reports", icon: FileBarChart, disabled: true },
+    { label: "Dashboard", href: "/match-official/dashboard", icon: Gauge },
+    matches,
   ],
   "integrity-officer": [
-    { label: "Dashboard", href: "/integrity/dashboard", icon: Gauge }, { label: "Complaints", href: "/integrity/complaints", icon: ShieldAlert }, { label: "Cases", href: "/integrity/cases/preview", icon: BriefcaseMedical },
-    { label: "My Investigations", icon: UserSearch, disabled: true }, { label: "Rulebook", icon: BookOpen, disabled: true }, { label: "Reports", icon: FileBarChart, disabled: true },
+    { label: "Dashboard", href: "/integrity/dashboard", icon: Gauge },
+    complaints,
+    cases,
+    rulebook,
   ],
   player: [
-    { label: "Dashboard", href: "/player/dashboard", icon: Gauge }, { label: "Player Profile", href: "/players/preview", icon: UserRound },
-    { label: "Career Stats", icon: ChartNoAxesColumn, disabled: true }, { label: "Fitness", icon: Activity, disabled: true }, { label: "Availability", icon: ClipboardCheck, disabled: true }, { label: "Matches", icon: Trophy, disabled: true }, { label: "Notifications", icon: Bell, disabled: true },
+    { label: "Dashboard", href: "/player/dashboard", icon: Gauge },
+    { label: "Player Profile", href: "/players/record", icon: UserRound },
+    { label: "Career & Performance", href: "/performance/players/record", icon: ChartNoAxesColumn },
+    matches,
   ],
 };
 
 export const routeLabels: Record<string, string> = {
-  "super-admin": "Super Administrator", "board-admin": "Board Administration", performance: "Performance", "match-official": "Match Official", integrity: "Integrity", player: "Player", dashboard: "Dashboard", players: "Players", new: "Register Player", preview: "Record", teams: "Teams", tournaments: "Tournaments", matches: "Matches", complaints: "Complaints", cases: "Cases",investigations: "My Investigations", rulebook: "Rulebook", reports: "Reports",
+  "super-admin": "Super Administrator",
+  "board-admin": "Board Administration",
+  performance: "Performance",
+  "match-official": "Match Official",
+  integrity: "Integrity",
+  player: "Player",
+  dashboard: "Dashboard",
+  players: "Players",
+  new: "Register Player",
+  edit: "Edit Player",
+  record: "Record",
+  teams: "Teams",
+  tournaments: "Tournaments",
+  matches: "Matches",
+  complaints: "Complaints",
+  cases: "Cases",
+  rulebook: "Rulebook",
 };

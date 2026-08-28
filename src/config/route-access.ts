@@ -1,6 +1,17 @@
 import type { RoleId } from "@/features/demo-auth/types";
 
-const sharedManagementRoles: readonly RoleId[] = ["super-admin", "board-admin", "performance-manager"];
+const allRoles: readonly RoleId[] = [
+  "super-admin",
+  "board-admin",
+  "performance-manager",
+  "match-official",
+  "integrity-officer",
+  "player",
+];
+const managementRoles: readonly RoleId[] = ["super-admin", "board-admin", "performance-manager"];
+const registryEditors: readonly RoleId[] = ["super-admin", "board-admin"];
+const competitionRoles: readonly RoleId[] = ["super-admin", "board-admin", "performance-manager", "match-official", "player"];
+const performanceRoles: readonly RoleId[] = ["super-admin", "board-admin", "performance-manager", "player"];
 const integrityRoles: readonly RoleId[] = ["super-admin", "integrity-officer"];
 
 export const routeAccess: Readonly<Record<string, readonly RoleId[]>> = {
@@ -8,27 +19,50 @@ export const routeAccess: Readonly<Record<string, readonly RoleId[]>> = {
   "/board-admin/dashboard": ["board-admin"],
   "/performance/dashboard": ["performance-manager"],
   "/match-official/dashboard": ["match-official"],
-  "/integrity/dashboard": [...integrityRoles],
+  "/integrity/dashboard": ["integrity-officer"],
   "/player/dashboard": ["player"],
-  "/players": [...sharedManagementRoles],
-  "/players/new": ["super-admin", "board-admin"],
-  "/players/[playerId]": [...sharedManagementRoles, "player"],
-  "/teams": [...sharedManagementRoles],
-  "/tournaments": ["board-admin"],
-  "/matches/[matchId]": ["board-admin", "match-official"],
+  "/players": [...managementRoles],
+  "/players/new": [...registryEditors],
+  "/players/[playerId]": [...managementRoles, "player"],
+  "/players/[playerId]/edit": [...registryEditors],
+  "/teams": [...managementRoles],
+  "/teams/[teamId]": [...managementRoles],
+  "/tournaments": ["super-admin", "board-admin"],
+  "/tournaments/[tournamentId]": ["super-admin", "board-admin"],
+  "/matches": [...competitionRoles],
+  "/matches/[matchId]": [...competitionRoles],
+  "/performance/players": ["super-admin", "board-admin", "performance-manager"],
+  "/performance/players/[playerId]": [...performanceRoles],
   "/integrity/complaints": [...integrityRoles],
+  "/integrity/complaints/[complaintId]": [...integrityRoles],
   "/integrity/cases": [...integrityRoles],
   "/integrity/cases/[caseId]": [...integrityRoles],
-  "/integrity/investigations": [...integrityRoles],
   "/integrity/rulebook": [...integrityRoles],
-  "/integrity/reports": [...integrityRoles],
+  "/integrity/rulebook/[ruleId]": [...integrityRoles],
 };
 
+const dynamicRoutePatterns: readonly [RegExp, string][] = [
+  [/^\/players\/[^/]+\/edit$/, "/players/[playerId]/edit"],
+  [/^\/players\/[^/]+$/, "/players/[playerId]"],
+  [/^\/teams\/[^/]+$/, "/teams/[teamId]"],
+  [/^\/tournaments\/[^/]+$/, "/tournaments/[tournamentId]"],
+  [/^\/matches\/[^/]+$/, "/matches/[matchId]"],
+  [/^\/performance\/players\/[^/]+$/, "/performance/players/[playerId]"],
+  [/^\/integrity\/complaints\/[^/]+$/, "/integrity/complaints/[complaintId]"],
+  [/^\/integrity\/cases\/[^/]+$/, "/integrity/cases/[caseId]"],
+  [/^\/integrity\/rulebook\/[^/]+$/, "/integrity/rulebook/[ruleId]"],
+];
+
+export function normalizeRoute(pathname: string) {
+  if (routeAccess[pathname]) return pathname;
+  return dynamicRoutePatterns.find(([pattern]) => pattern.test(pathname))?.[1] ?? pathname;
+}
+
 export function canAccessRoute(role: RoleId, pathname: string) {
-  const normalized = routeAccess[pathname] ? pathname : pathname
-    .replace(/^\/players\/[^/]+$/, "/players/[playerId]")
-    .replace(/^\/matches\/[^/]+$/, "/matches/[matchId]")
-    .replace(/^\/integrity\/cases\/[^/]+$/, "/integrity/cases/[caseId]");
-  const permitted = routeAccess[normalized];
-  return !!permitted && permitted.includes(role);
+  return routeAccess[normalizeRoute(pathname)]?.includes(role) ?? false;
+}
+
+export function canAnyRoleAccess(pathname: string) {
+  const permitted = routeAccess[normalizeRoute(pathname)];
+  return permitted ? allRoles.some((role) => permitted.includes(role)) : false;
 }
