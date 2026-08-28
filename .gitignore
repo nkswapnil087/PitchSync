@@ -28,3 +28,5 @@ npm-debug.log*
 linuxx64_12201_database.zip
 V839960-01.zip
 database/setup/create_local_user.sql
+
+DEMO_CREDENTIALS.txt
