@@ -9,7 +9,7 @@ export const Select = SelectPrimitive.Root;
 export const SelectValue = SelectPrimitive.Value;
 
 export function SelectTrigger({ className, children, ...props }: React.ComponentProps<typeof SelectPrimitive.Trigger>) {
-  return <SelectPrimitive.Trigger className={cn("flex h-10 min-w-36 items-center justify-between gap-3 rounded-[10px] border bg-[var(--surface)] px-3 text-sm text-[var(--text)] outline-none focus:border-[var(--bd-green)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--bd-green)_16%,transparent)] data-[placeholder]:text-[var(--text-muted)]", className)} {...props}>{children}<SelectPrimitive.Icon><ChevronDown className="size-4 text-[var(--text-muted)]" /></SelectPrimitive.Icon></SelectPrimitive.Trigger>;
+  return <SelectPrimitive.Trigger className={cn("flex h-10 w-full min-w-36 items-center justify-between gap-3 rounded-[10px] border bg-[var(--surface)] px-3 text-sm text-[var(--text)] outline-none focus:border-[var(--bd-green)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--bd-green)_16%,transparent)] data-[placeholder]:text-[var(--text-muted)] sm:w-auto", className)} {...props}>{children}<SelectPrimitive.Icon><ChevronDown className="size-4 text-[var(--text-muted)]" /></SelectPrimitive.Icon></SelectPrimitive.Trigger>;
 }
 
 export function SelectContent({ className, children, ...props }: React.ComponentProps<typeof SelectPrimitive.Content>) {

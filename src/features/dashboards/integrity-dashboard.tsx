@@ -1,44 +1,20 @@
 import Link from "next/link";
-import { BookOpen, BriefcaseMedical, CircleAlert, Flag, Unlink, UserSearch, UsersRound } from "lucide-react";
+import { BookOpen, BriefcaseBusiness, FileSearch, ShieldAlert, UserSearch } from "lucide-react";
+import { DataTableShell } from "@/components/data-display/data-table-shell";
 import { MetricCard } from "@/components/data-display/metric-card";
 import { SectionCard } from "@/components/data-display/section-card";
-import { UnavailableFeature } from "@/components/feedback/unavailable-feature";
 import { PageHeader } from "@/components/page/page-header";
 import { Button } from "@/components/ui/button";
-import { StatePanel } from "@/features/shared/state-panel";
+import { ConfidentialityNotice } from "@/features/integrity/confidentiality-notice";
 
 export function IntegrityDashboard() {
   return (
     <>
-      <PageHeader
-        eyebrow="Integrity & compliance"
-        title="Integrity oversight"
-        description="Manage confidential complaint and integrity case workflows."
-        actions={<div className="flex gap-2"><Button asChild><Link href="/integrity/complaints">Open complaints</Link></Button><Button asChild variant="outline"><Link href="/integrity/cases/preview">View case</Link></Button></div>}
-      />
-      <section className="grid grid-cols-4 gap-4">
-        <MetricCard label="Unlinked complaints" icon={Unlink} />
-        <MetricCard label="Active cases" icon={BriefcaseMedical} />
-        <MetricCard label="My investigations" icon={UserSearch} />
-        <MetricCard label="Pending referrals" icon={Flag} />
-      </section>
-      <section className="grid grid-cols-3 gap-5">
-        <SectionCard title="My Investigations" className="col-span-2">
-          <StatePanel title="No investigations assigned" />
-        </SectionCard>
-        <SectionCard title="Cases Without Evidence" icon={CircleAlert}>
-          <StatePanel title="No cases without evidence" />
-        </SectionCard>
-        <SectionCard title="Recent Case Activity" className="col-span-2">
-          <StatePanel title="No case activity recorded" />
-        </SectionCard>
-        <SectionCard title="Investigator Workload" icon={UsersRound}>
-          <StatePanel title="No workload information available" />
-        </SectionCard>
-        <SectionCard title="Rulebook Reference" className="col-span-3" icon={BookOpen}>
-          <UnavailableFeature compact title="No rulebook information available" />
-        </SectionCard>
-      </section>
+      <ConfidentialityNotice />
+      <PageHeader eyebrow="Integrity & compliance" title="Integrity oversight" description="Review complaints, cases, investigators, rule violations, and case evidence." />
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"><MetricCard label="Complaints" icon={ShieldAlert} /><MetricCard label="Cases" icon={BriefcaseBusiness} /><MetricCard label="Assigned investigators" icon={UserSearch} /><MetricCard label="Evidence items" icon={FileSearch} /></section>
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3"><Button asChild><Link href="/integrity/complaints"><ShieldAlert />Complaints</Link></Button><Button asChild variant="outline"><Link href="/integrity/cases"><BriefcaseBusiness />Cases</Link></Button><Button asChild variant="outline"><Link href="/integrity/rulebook"><BookOpen />Rulebook</Link></Button></section>
+      <section className="grid grid-cols-1 gap-5 xl:grid-cols-2"><SectionCard title="Case progress"><DataTableShell minWidth={620} columns={["Case ID", "Status", "Date opened", "Players", "Investigators"]} emptyTitle="No cases found" /></SectionCard><SectionCard title="Complaint sources"><DataTableShell minWidth={620} columns={["Complaint ID", "Date received", "Source type", "Linked cases"]} emptyTitle="No complaints found" /></SectionCard></section>
     </>
   );
 }

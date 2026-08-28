@@ -1,8 +1,10 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
+  Bell,
   BriefcaseBusiness,
   ChartNoAxesColumn,
+  FileBarChart,
   Gauge,
   Medal,
   ShieldAlert,
@@ -27,6 +29,7 @@ const performance = { label: "Performance", href: "/performance/players", icon: 
 const complaints = { label: "Complaints", href: "/integrity/complaints", icon: ShieldAlert } as const;
 const cases = { label: "Cases", href: "/integrity/cases", icon: BriefcaseBusiness } as const;
 const rulebook = { label: "Rulebook", href: "/integrity/rulebook", icon: BookOpen } as const;
+const reports = { label: "Reports", icon: FileBarChart, disabled: true } as const;
 
 export const navigationByRole: Record<RoleId, readonly NavigationItem[]> = {
   "super-admin": [
@@ -39,6 +42,7 @@ export const navigationByRole: Record<RoleId, readonly NavigationItem[]> = {
     complaints,
     cases,
     rulebook,
+    reports,
   ],
   "board-admin": [
     { label: "Dashboard", href: "/board-admin/dashboard", icon: Gauge },
@@ -47,6 +51,7 @@ export const navigationByRole: Record<RoleId, readonly NavigationItem[]> = {
     tournaments,
     matches,
     performance,
+    reports,
   ],
   "performance-manager": [
     { label: "Dashboard", href: "/performance/dashboard", icon: Gauge },
@@ -54,22 +59,26 @@ export const navigationByRole: Record<RoleId, readonly NavigationItem[]> = {
     teams,
     matches,
     performance,
+    reports,
   ],
   "match-official": [
     { label: "Dashboard", href: "/match-official/dashboard", icon: Gauge },
     matches,
+    reports,
   ],
   "integrity-officer": [
     { label: "Dashboard", href: "/integrity/dashboard", icon: Gauge },
     complaints,
     cases,
     rulebook,
+    reports,
   ],
   player: [
     { label: "Dashboard", href: "/player/dashboard", icon: Gauge },
     { label: "Player Profile", href: "/players/record", icon: UserRound },
     { label: "Career & Performance", href: "/performance/players/record", icon: ChartNoAxesColumn },
     matches,
+    { label: "Notifications", icon: Bell, disabled: true },
   ],
 };
 
