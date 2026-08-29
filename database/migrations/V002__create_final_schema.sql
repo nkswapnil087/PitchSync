@@ -1,25 +1,4 @@
-/*
-  PitchSync V002 - FINAL FRESH SCHEMA
-  Target DBMS: Oracle Database 19c
-  Install type: Fresh / empty database
 
-  Design decisions finalized for V002:
-  - No ALTER TABLE and no DROP statements are required.
-  - CASE is physically named CASE_RECORD.
-  - PERSON specialization remains PLAYER / ADMIN.
-  - Only PLAYER can be involved in a disciplinary CASE_RECORD.
-    Therefore INVOLVES_IN.person_id references PLAYER(person_id).
-  - INVESTIGATES assigns one ADMIN investigator to one specific
-    PLAYER-case involvement.
-  - Oracle 19c identity columns generate surrogate primary keys.
-  - This file contains ONLY the core relational schema:
-      tables, keys, constraints, and identity columns.
-  - Explicit performance indexes are kept separately under database/indexes/.
-  - Triggers are kept separately under database/triggers/.
-  - Views, procedures, and functions are also installed separately.
-  - Cross-table workflow rules are documented at the end and should be
-    enforced by PL/SQL procedures / application transactions where appropriate.
-*/
 
 SET DEFINE OFF;
 --------------------------------------------------------------------------------
@@ -564,34 +543,3 @@ CREATE TABLE audit_log (
     )
 );
 
---------------------------------------------------------------------------------
--- 11. IMPORTANT BUSINESS RULES FOR PROCEDURES / APPLICATION TRANSACTIONS
---------------------------------------------------------------------------------
-
-/*
-  These rules depend on multiple rows/tables and should NOT be represented by
-  fake CHECK constraints:
-
-  1. PERSON specialization is total and disjoint:
-       every PERSON must become exactly one of PLAYER or ADMIN.
-
-  2. A finalized/scheduled cricket MATCH must contain exactly two rows in
-       INCLUDES.
-
-  3. If MATCH.winner_team_id is not NULL, that team must be one of the teams
-       in INCLUDES for the same match.
-
-  4. If your application prohibits overlapping PLAYS_FOR periods for a player,
-       validate that during team-assignment / transfer workflow.
-
-  5. A formally opened CASE_RECORD should receive at least one INVOLVES_IN
-       row. Because INVOLVES_IN references PLAYER, this also guarantees the
-       project rule that only players can be involved in cases.
-
-  6. SOURCE_OF remains optional: a complaint may exist without a case, and a
-       case may be opened from suspicious activity without a complaint.
-
-  7. Audit triggers for CASE_RECORD, EVIDENCE, INVESTIGATES, account/role
-       changes and finalized-performance corrections can be added in the
-       PL/SQL/auditing phase using AUDIT_LOG.
-*/
