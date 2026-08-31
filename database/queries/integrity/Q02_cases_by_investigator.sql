@@ -1,4 +1,5 @@
--- Q02: Cases/involvements assigned to one investigator
+-- Q02: Cases/involvements assigned to one investigator.
+-- V003 bind: :admin_id = 200005
 
 SELECT
     i.admin_id,
@@ -15,5 +16,9 @@ JOIN case_record c
     ON c.case_id = ii.case_id
 JOIN person p
     ON p.person_id = ii.person_id
-WHERE i.admin_id = 2001
+WHERE i.admin_id = :admin_id
+  AND i.is_deleted = 0
+  AND ii.is_deleted = 0
+  AND c.is_deleted = 0
+  AND p.is_deleted = 0
 ORDER BY c.date_opened DESC, ii.case_id DESC, ii.person_id;

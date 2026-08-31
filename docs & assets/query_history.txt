@@ -1,0 +1,367 @@
+PitchSync Oracle execution history
+==================================
+
+Reason:
+Verify whether the local PITCHPDB connection supports operating-system authentication before V003 deployment.
+
+Type:
+SELECT / CONNECTION CHECK
+
+Status:
+FAILED
+
+SQL:
+SELECT SYS_CONTEXT('USERENV', 'SESSION_USER') || '|' ||
+       SYS_CONTEXT('USERENV', 'CON_NAME')
+FROM dual;
+
+Oracle error:
+ORA-12638: Credential retrieval failed.
+
+Cause:
+The PITCHSYNC_OWNER connection requires its database credential; operating-system credential retrieval was not available. No SQL reached the database and no object was changed.
+
+Reason:
+Perform the required read-only target and schema-state check before V003 deployment.
+
+Type:
+SELECT / CONNECTION CHECK
+
+Status:
+FAILED
+
+SQL:
+SELECT SYS_CONTEXT('USERENV', 'SESSION_USER') AS session_user,
+       SYS_CONTEXT('USERENV', 'CON_NAME') AS container_name
+FROM dual;
+
+Oracle error:
+ORA-12546: TNS: permission denied.
+
+Cause:
+The sandbox initially blocked the local listener connection. No SQL reached the database and no object was changed. The check was retried with approved local access.
+
+Reason:
+Retry the required read-only target and schema-state check with approved access to localhost:1522/PITCHPDB.
+
+Type:
+SELECT / CONNECTION CHECK
+
+Status:
+FAILED
+
+SQL:
+SELECT SYS_CONTEXT('USERENV', 'SESSION_USER') AS session_user,
+       SYS_CONTEXT('USERENV', 'CON_NAME') AS container_name
+FROM dual;
+
+Oracle error:
+ORA-01017: invalid username/password; logon denied.
+
+Cause:
+Oracle rejected the command-embedded CONNECT path before creating a session. The same credential later succeeded through the Oracle 19c password prompt, confirming that the password value was not the problem. No SQL reached the database and no object was changed; the password itself was not logged.
+
+Reason:
+Verify the corrected Oracle 19c password-prompt connection path and confirm the target before executing schema SQL.
+
+Type:
+SELECT / CONNECTION CHECK
+
+Status:
+SUCCESS
+
+SQL:
+SELECT SYS_CONTEXT('USERENV', 'SESSION_USER') AS session_user,
+       SYS_CONTEXT('USERENV', 'CON_NAME') AS container_name
+FROM dual;
+
+Result:
+SESSION_USER = PITCHSYNC_OWNER
+CONTAINER_NAME = PITCHPDB
+
+Cause / note:
+The connection succeeded through the Oracle 19c SQL*Plus password prompt at localhost:1522/PITCHPDB. The password was read fresh from `.env.oracle-local`, sent only through standard input, and was not printed, placed on the command line, or persisted.
+
+Reason:
+Confirm that the authoritative target schema is clean before fresh V003 deployment.
+
+Type:
+SELECT / PREFLIGHT
+
+Status:
+SUCCESS
+
+SQL:
+SELECT 'TABLES' AS object_kind, COUNT(*) AS object_count FROM user_tables
+UNION ALL
+SELECT 'SEQUENCES', COUNT(*) FROM user_sequences
+UNION ALL
+SELECT 'TYPES', COUNT(*) FROM user_types;
+
+Result:
+TABLES = 0
+SEQUENCES = 0
+TYPES = 0
+
+Reason:
+Begin fresh V003 deployment after the authenticated target and empty schema were confirmed.
+
+Type:
+DDL / CREATE TYPE
+
+Status:
+FAILED
+
+SQL:
+CREATE TYPE address_type AS OBJECT (
+    address_line      VARCHAR2(255),
+    upazila_or_thana  VARCHAR2(100),
+    district          VARCHAR2(100),
+    division          VARCHAR2(100)
+);
+
+Oracle error:
+ORA-01031: insufficient privileges.
+
+Cause:
+PITCHSYNC_OWNER does not have the CREATE TYPE system privilege required by V003. This is the first creation statement, so no V003 object was created and no later schema, index, trigger, or seed SQL was executed.
+
+Reason:
+Verify the failed CREATE TYPE left the schema unchanged and identify the account's effective system privileges.
+
+Type:
+SELECT / POST-FAILURE DIAGNOSTIC
+
+Status:
+SUCCESS
+
+SQL:
+SELECT 'TABLES' AS object_kind, COUNT(*) AS object_count FROM user_tables
+UNION ALL
+SELECT 'SEQUENCES', COUNT(*) FROM user_sequences
+UNION ALL
+SELECT 'TYPES', COUNT(*) FROM user_types;
+
+SELECT privilege FROM user_sys_privs ORDER BY privilege;
+
+Result:
+TABLES = 0
+SEQUENCES = 0
+TYPES = 0
+Granted privileges: CREATE PROCEDURE, CREATE SEQUENCE, CREATE SESSION, CREATE TABLE, CREATE TRIGGER, CREATE VIEW.
+Missing privilege required by V003: CREATE TYPE.
+
+Reason:
+Resume deployment after CREATE TYPE was granted and reconfirm the safe clean-schema checkpoint.
+
+Type:
+SELECT / PRIVILEGE AND PREFLIGHT CHECK
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+SELECT privilege
+FROM user_sys_privs
+WHERE privilege = 'CREATE TYPE';
+
+SELECT 'TABLES' AS object_kind, COUNT(*) AS object_count FROM user_tables
+UNION ALL SELECT 'SEQUENCES', COUNT(*) FROM user_sequences
+UNION ALL SELECT 'TYPES', COUNT(*) FROM user_types;
+
+Result:
+CREATE TYPE was present. TABLES = 0, SEQUENCES = 0, TYPES = 0. The authenticated target remained PITCHSYNC_OWNER in PITCHPDB on localhost:1522.
+
+Reason:
+Create the V003 core objects while safely skipping the destructive drop preamble on the confirmed clean schema.
+
+Type:
+DDL / V003 CORE CREATION
+
+Status:
+FAILED
+
+SQL:
+The unchanged creation section of database/migrations/V003_create_final_schema.sql, beginning with CREATE TYPE ADDRESS_TYPE. The DROP preamble was skipped.
+
+SQL*Plus error:
+SP2-0734 errors began when the multiline CREATE TABLE PERSON statement reached blank lines.
+
+Cause:
+SQL*Plus standard-input parsing had SQLBLANKLINES disabled. Both object types and five explicit sequences were created before the first table buffer was split; no table was created. This was an execution-client issue, not a V003 design or privilege error.
+
+Reason:
+Return the interrupted V003 attempt to the verified clean checkpoint before retrying.
+
+Type:
+DDL / TARGETED CLEANUP
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+DROP SEQUENCE seq_player_person;
+DROP SEQUENCE seq_admin_person;
+DROP SEQUENCE seq_match;
+DROP SEQUENCE seq_complaint;
+DROP SEQUENCE seq_case_record;
+DROP TYPE education_type;
+DROP TYPE address_type;
+
+Result:
+Only the five sequences and two types created by the interrupted attempt were removed. The follow-up catalog check returned TABLES = 0, SEQUENCES = 0, TYPES = 0.
+
+Reason:
+Deploy the authoritative V003 core from the restored clean checkpoint with correct multiline SQL*Plus parsing.
+
+Type:
+DDL / V003 CORE CREATION
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+SET SQLBLANKLINES ON;
+The unchanged creation section of database/migrations/V003_create_final_schema.sql, beginning with CREATE TYPE ADDRESS_TYPE. The DROP preamble was skipped because the schema was clean.
+
+Result:
+2 object types, 5 explicit sequences, and 32 tables were created. SQL*Plus exit code 0.
+
+Reason:
+Install the audited V003 lookup/performance indexes and compatible validation triggers.
+
+Type:
+DDL / INDEXES AND TRIGGERS
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+@database/indexes/create_indexes.sql
+@database/triggers/trg_person_dob_valid.sql
+@database/triggers/trg_investigates_admin_role.sql
+
+Result:
+15 indexes and 2 triggers were created. Both triggers are enabled and all 15 explicit indexes are valid.
+
+Reason:
+Load and commit the audited V003 presentation dataset.
+
+Type:
+DML / SEED DATA
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+@database/seeds/v003_demo_data.sql
+COMMIT;
+
+Result:
+226 inserts across 31 tables were committed. AUDIT_LOG intentionally remained empty for runtime activity.
+
+Reason:
+Run the first live structural and row-count verification after deployment.
+
+Type:
+SELECT / VERIFICATION
+
+Status:
+FAILED
+
+SQL:
+@database/tests/verify_v003_schema.sql
+
+Oracle error:
+ORA-00904: "TABLE_NAME": invalid identifier.
+
+Cause:
+The row-count UNION ALL report ordered directly by its projected alias. The verification-only query was wrapped in an outer SELECT so Oracle could resolve TABLE_NAME consistently. No database object or data was changed.
+
+Reason:
+Rerun the corrected structural verification and record the live deployment state.
+
+Type:
+SELECT / VERIFICATION
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+@database/tests/verify_v003_schema.sql
+
+Result:
+32 tables; 32 primary keys; 41 foreign keys; 11 unique constraints; 138 enabled and validated Oracle check/NOT NULL constraints, including 6 named business checks; 226 total rows; 5 explicit sequences; 2 object types; 15 valid explicit indexes; 2 enabled triggers; 0 invalid objects.
+
+Reason:
+Execute all current V003 query files with repeatable seed bind values.
+
+Type:
+SELECT / QUERY SUITE
+
+Status:
+FAILED
+
+SQL:
+@database/tests/run_v003_queries.sql
+
+SQL*Plus error:
+SP2-0552: Bind variable "DATE_TO" not declared.
+
+Cause:
+This SQL*Plus 19c client does not support DATE in the VARIABLE command. The runner now declares the three date inputs as VARCHAR2(10), sets NLS_DATE_FORMAT to YYYY-MM-DD for its session, and the affected query casts date-range binds explicitly where arithmetic is required.
+
+Reason:
+Retry the complete V003 query catalogue after correcting the SQL*Plus runner.
+
+Type:
+SELECT / QUERY SUITE
+
+Status:
+FAILED
+
+SQL:
+@database/tests/run_v003_queries.sql
+
+Oracle errors:
+A05_system_record_counts.sql: ORA-00904: "METRIC": invalid identifier.
+A07_audit_activity_report.sql: ORA-00932: inconsistent datatypes: expected TIMESTAMP got NUMBER.
+A10_soft_deleted_record_summary.sql: ORA-00904: "ENTITY_NAME": invalid identifier.
+
+Cause:
+A05 and A10 ordered UNION ALL results by an alias Oracle did not expose at that level; both now use ORDER BY 1. A07 added one day to a SQL*Plus string bind, causing numeric coercion; its range binds are now cast to DATE. The schema and seed data were unchanged.
+
+Reason:
+Execute the fully corrected V003 query catalogue and confirm every current query runs against live seed data.
+
+Type:
+SELECT / QUERY SUITE
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+@database/tests/run_v003_queries.sql
+
+Result row counts:
+A01=6, A02=8, A03=3, A04=2, A05=7, A06=8, A07=0, A08=6, A09=6, A10=10.
+P01=1, P02=1, P03=1, P04=2, P05=3, P06=2, P07=6, P08=2, P09=3.
+T01=3, T02=4, T03=6, T04=4, T05=2, T06=2, T07=1, T08=0, T09=0.
+Q01=5, Q02=4, Q03=2, Q04=2, Q05=2, Q06=1, Q07=2, Q08=2, Q09=2, Q10=1, Q11=6, Q12=1, Q13=1, Q14=1, Q15=1.
+
+All 43 query files executed. Zero ORA-, SP2-, or PLS- errors were observed. Zero-row results are valid empty-state findings for the seeded filters, not execution failures.
+
+Reason:
+Capture the final live Oracle catalog and per-table row-count snapshot for deployment documentation.
+
+Type:
+SELECT / FINAL VERIFICATION
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+Queries against USER_TABLES, USER_CONSTRAINTS, USER_SEQUENCES, USER_TYPES, USER_INDEXES, USER_TRIGGERS, USER_OBJECTS, and COUNT(*) for every V003 table.
+
+Result:
+SESSION_USER = PITCHSYNC_OWNER; CONTAINER_NAME = PITCHPDB; 32 tables; 226 committed rows; every PK/FK/unique/check constraint enabled and validated; 15 explicit indexes valid; 2 triggers enabled; 0 invalid objects.

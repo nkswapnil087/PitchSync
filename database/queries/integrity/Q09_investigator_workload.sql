@@ -9,14 +9,18 @@ JOIN person p
     ON p.person_id = a.person_id
 LEFT JOIN investigates i
     ON i.admin_id = a.person_id
+   AND i.is_deleted = 0
 LEFT JOIN case_record c
     ON c.case_id = i.case_id
+   AND c.is_deleted = 0
    AND c.status IN (
        'OPEN',
        'UNDER_INVESTIGATION',
        'REFERRED'
    )
 WHERE a.designation = 'Integrity & Compliance Officer'
+  AND a.is_deleted = 0
+  AND p.is_deleted = 0
 GROUP BY
     a.person_id,
     p.first_name,

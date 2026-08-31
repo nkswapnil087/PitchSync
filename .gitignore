@@ -30,3 +30,5 @@ V839960-01.zip
 database/setup/create_local_user.sql
 
 DEMO_CREDENTIALS.txt
+
+.env.oracle-local

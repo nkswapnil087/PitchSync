@@ -9,4 +9,5 @@ SELECT
     c.referred_to_authority
 FROM case_record c
 WHERE c.status IN ('OPEN', 'UNDER_INVESTIGATION', 'REFERRED')
+  AND c.is_deleted = 0
 ORDER BY c.date_opened DESC, c.case_id DESC;

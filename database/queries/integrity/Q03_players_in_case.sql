@@ -1,4 +1,5 @@
--- Q03: All players involved in one case
+-- Q03: All players involved in one case.
+-- V003 bind: :case_id = 1
 SELECT
     p.person_id AS player_id,
     p.first_name,
@@ -13,5 +14,9 @@ JOIN person p
 LEFT JOIN investigates i
     ON i.person_id = ii.person_id
    AND i.case_id = ii.case_id
-WHERE ii.case_id = 5001
+   AND i.is_deleted = 0
+WHERE ii.case_id = :case_id
+  AND ii.is_deleted = 0
+  AND pl.is_deleted = 0
+  AND p.is_deleted = 0
 ORDER BY p.last_name, p.first_name, p.person_id;

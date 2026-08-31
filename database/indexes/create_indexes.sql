@@ -2,7 +2,7 @@
   PitchSync - Explicit Performance / Lookup Indexes
   Target DBMS: Oracle Database 19c
 
-  Run AFTER V002__create_final_schema_clean.sql.
+  Run AFTER V003_create_final_schema.sql.
 
   Note:
   - PRIMARY KEY and UNIQUE constraints already create supporting indexes

@@ -1,174 +1,99 @@
-# Database
+# PitchSync Database
 
-Git-tracked schema, seeds, queries, and PL/SQL source for PitchSync.
-Target: **Oracle Database 19c** (local XE or container).
+PitchSync targets Oracle Database 19c. The database history is evolutionary:
 
-## Directory layout
+- `V001__create_final_schema.sql` is the original foundation and reference.
+- `V002__create_final_schema.sql` is an intermediate historical version.
+- `V003_create_final_schema.sql` is the current authoritative physical schema.
 
-```
+Fresh deployments use V003 directly. Do not run V001 and V002 first.
+
+## Current V003 file set
+
+```text
 database/
-  migrations/          Ordered DDL scripts (run in numeric order)
-    V001__create_final_schema.sql   First-pass schema (no identity columns)
-    V002__create_final_schema.sql   Definitive schema — use this for fresh installs
-  seeds/               Sample data
-    v002_demo_data.sql              Integrity-module demo data (matches V002)
-  queries/
-    integrity/         15 query files (Q01–Q15) for the Integrity module
-  setup/
-    create_local_user.example.sql   Bootstrap script (tracked in Git)
-    create_local_user.sql           Your personal copy (gitignored — contains password)
-  indexes/             Explicit performance/lookup indexes (run after V002)
-  triggers/            Trigger source files
-  views/               View definitions
-  procedures/          Stored procedures
-  functions/           Stored functions
-  packages/            Oracle package specs and bodies
-  tests/               SQL validation and regression checks
-  reference/           Legacy reference material (not part of migration history)
+|-- migrations/V003_create_final_schema.sql
+|-- indexes/create_indexes.sql
+|-- triggers/trg_person_dob_valid.sql
+|-- triggers/trg_investigates_admin_role.sql
+|-- seeds/v003_demo_data.sql
+|-- tests/verify_v003_schema.sql
+|-- tests/run_v003_queries.sql
+`-- queries/
+    |-- admin/A01-A10
+    |-- player/P01-P09
+    |-- tournament/T01-T09
+    `-- integrity/Q01-Q15
 ```
 
-## Quick start for new developers
+The `reference/` directory and the V001/V002 migrations and seeds are historical material. They are not part of a V003 deployment.
 
-### Prerequisites
+## Local deployment target
 
-- Oracle Database 19c running locally (XE, Docker, or similar)
-- Access to the `ORCLPDB1` pluggable database (or your local PDB name)
-- SQL*Plus, SQLcl, or SQL Developer available
+The verified project environment uses a dedicated schema and PDB:
 
-### Step 1 — Create your local development user
+```text
+Schema:  PITCHSYNC_OWNER
+Host:    localhost
+Port:    1522
+Service: PITCHPDB
+```
 
-You only need `SYSTEM` or `SYS` **once**, to bootstrap your personal dev user.
-These admin accounts are **not** used by the backend or by any application code.
+Confirm both values before changing anything:
 
 ```sql
--- Connect as SYSTEM (or SYSDBA) to your PDB, then:
--- 1. Copy the example script
---    database/setup/create_local_user.example.sql
---    → database/setup/create_local_user.sql
-
--- 2. Edit create_local_user.sql:
---    Change YOUR_LOCAL_PASSWORD to something only you know.
-
--- 3. Run it.
+SELECT SYS_CONTEXT('USERENV', 'SESSION_USER') AS session_user,
+       SYS_CONTEXT('USERENV', 'CON_NAME') AS container_name
+FROM dual;
 ```
 
-The script grants `CREATE SESSION`, `CREATE TABLE`, `CREATE VIEW`,
-`CREATE PROCEDURE`, `CREATE TRIGGER`, and `CREATE SEQUENCE` to the
-`PITCHSYNC_DEV` user with unlimited quota on the `users` tablespace.
+Do not run these scripts against the separate Oracle XE listener on port 1521.
 
-> `create_local_user.sql` is **gitignored** — your password never
-> enters version control.
+## Safe deployment order
 
-### Step 2 — Run the V002 schema migration
+1. Inspect `USER_TABLES`, `USER_SEQUENCES`, and `USER_TYPES`.
+2. Confirm all existing objects are disposable PitchSync development objects, or confirm the schema is empty.
+3. Run V003 while handling its development-only drop preamble safely. On a fresh schema, skip the unnecessary drop section.
+4. Run `database/indexes/create_indexes.sql`.
+5. Run both compatible triggers under `database/triggers/`.
+6. Run `database/seeds/v003_demo_data.sql` and commit.
+7. Run `database/tests/verify_v003_schema.sql`.
+8. Run `database/tests/run_v003_queries.sql`.
 
-Connect as **your** `PITCHSYNC_DEV` user and run:
+V003 creates 32 tables, five explicit user-facing sequences, two object types, and identity-backed internal keys. Oracle also creates internal identity sequences and supporting indexes.
+
+The schema owner needs `CREATE TYPE` in addition to the standard table, sequence, trigger, procedure, and view creation privileges. The local setup example includes this grant because V003 creates `ADDRESS_TYPE` and `EDUCATION_TYPE` before its tables.
+
+## Seed data
+
+`v003_demo_data.sql` is the only seed source for V003. It contains 226 inserts across 31 tables. `AUDIT_LOG` intentionally starts empty because runtime audit activity should populate it later.
+
+Seed application accounts are disabled and use an unusable credential marker. They are not valid application credentials. Private contact information and statistics in the dataset are synthetic.
+
+## Query catalogue
+
+- Admin A01-A10: accounts, availability, record counts, observations, audit reporting, and soft deletion.
+- Player P01-P09: tournament records, career summaries, performance, selection, rosters, and mentorship.
+- Tournament T01-T09: fixtures, results, leaders, venues, sponsors, and completeness checks.
+- Integrity Q01-Q15: complaints, cases, evidence, investigators, involved players, and rules.
+
+Queries use bind variables such as `:player_id` and `:tournament_id`. `run_v003_queries.sql` supplies values from the V003 seed dataset for repeatable validation.
+
+Run the test scripts with `database/tests` as SQL*Plus's working directory so the query runner's relative includes resolve correctly:
 
 ```sql
-@database/migrations/V002__create_final_schema.sql
+@verify_v003_schema.sql
+@run_v003_queries.sql
 ```
 
-This creates all tables using Oracle 19c identity columns
-(`GENERATED BY DEFAULT ON NULL AS IDENTITY`), constraints, and
-foreign keys. It is the single source of truth for a fresh install.
+## Verification and history
 
-> **Do not** run V001 on a fresh database. V001 is kept for reference
-> and diffing only — it lacks identity columns and uses the older
-> `integrity_case` table name instead of `case_record`.
+`verify_v003_schema.sql` reports the live target, table names/count, constraints and their columns, row counts, total rows, sequences, types, indexes, and trigger status using Oracle user metadata views.
 
-### Step 3 — Load seed data
+Every live database change or failed execution attempt must be appended to:
 
-```sql
-@database/seeds/v002_demo_data.sql
+```text
+docs & assets/query_history.txt
 ```
 
-Populates the Integrity module with sample persons, players, admins,
-rules, complaints, case records, evidence, investigations, and
-violations. Intentionally includes edge cases (complaints without
-cases, cases without evidence, involvements without investigators)
-for testing queries.
-
-### Step 4 — Run queries
-
-The `queries/integrity/` folder contains 15 files (Q01–Q15):
-
-| File | Topic |
-|------|-------|
-| Q01 | Unresolved cases |
-| Q02 | Cases by investigator |
-| Q03 | Players in a case |
-| Q04 | Rules for a case |
-| Q05 | Evidence for a case |
-| Q06 | Unresolved cases without evidence |
-| Q07 | Complaints without cases |
-| Q08 | Frequently violated rules |
-| Q09 | Investigator workload |
-| Q10 | Full case dossier |
-| Q11 | List complaints |
-| Q12 | Complaint details with case |
-| Q13 | Cases by player |
-| Q14 | Involvements without investigator |
-| Q15 | Referred cases |
-
-Some files are empty placeholders — fill them in as the module develops.
-
-### Step 5 — Apply indexes, triggers, views, procedures, functions(DO NOT RUN IT NOW)
-
-After the schema and seed are stable, run the remaining objects in any
-order that respects dependencies:
-
-1. `indexes/create_indexes.sql` — performance and FK lookup indexes
-2. `triggers/` — e.g. `trg_person_dob_valid.sql`, `trg_investigates_admin_role.sql`
-3. `views/`, `procedures/`, `functions/`, `packages/`
-
-These are not required for the backend to start, but improve
-performance and enforce additional business rules.
-
-## Environment configuration
-
-### `.env.example` vs `.env`
-
-The backend reads connection details from environment variables.
-A template is provided at `backend/.env.example`:
-
-```
-DB_USER=PITCHSYNC_DEV
-DB_PASSWORD=
-DB_HOST=127.0.0.1
-DB_PORT=1521
-DB_SERVICE=ORCLPDB1
-PORT=3000
-```
-
-Each developer copies this to `backend/.env` and fills in their own
-values. The `.env` file is **gitignored**.
-
-**Developers will have different:**
-- passwords (everyone creates their own `PITCHSYNC_DEV` password)
-- port numbers (depending on local Oracle install)
-- service names (`ORCLPDB1` for XE, may differ for Docker or other installs)
-
-The backend config (`backend/src/config/database.js`) reads these
-variables at startup and builds the Oracle Easy Connect string
-`host:port/service`.
-
-## Account model
-
-| Account | Purpose | Used by |
-|---------|---------|---------|
-| `SYSTEM` / `SYS` | DBA — create users, manage tablespaces | Developers, **once** during setup |
-| `PITCHSYNC_DEV` | Local development — run migrations, seed, queries | Each developer's personal account |
-| Application backend | Express API reads/writes via `PITCHSYNC_DEV` | `backend/src/config/database.js` |
-
-> **Never** hard-code `SYSTEM`, `SYS`, or any shared password in
-> application code or committed files.
-
-## What Git tracks vs. what it does not
-
-**Tracks:**
-DDL scripts, migration files, PL/SQL source, views, seeds, triggers,
-queries, index definitions, setup examples.
-
-**Does not track:**
-Oracle datafiles, database passwords (`.env`, `create_local_user.sql`),
-Docker volumes, SSH keys, Oracle installation archives, database dumps
-(unless intentionally approved).
+Never place passwords, Oracle wallets, `.env` files, private keys, or privileged credentials in Git.

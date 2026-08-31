@@ -10,9 +10,8 @@ SET DEFINE OFF;
 -- can be demonstrated later.
 --
 -- NOTE ABOUT USER_ACCOUNT:
--- password_hash values below are demo placeholders only. Replace them with
--- hashes produced by the application's real password-hashing mechanism before
--- using these accounts for authentication.
+-- Seed accounts are disabled and carry an intentionally unusable credential
+-- marker. Backend authentication must replace these values before activation.
 --------------------------------------------------------------------------------
 
 
@@ -159,7 +158,7 @@ INSERT INTO admin (
     seq_admin_person.CURRVAL,
     'Super Administrator',
     'System Administration',
-    'farhan.kabir@pitchsync.demo',
+    'farhan.kabir@pitchsync.invalid',
     DATE '2018-01-10'
 );
 
@@ -180,7 +179,7 @@ INSERT INTO admin (
     seq_admin_person.CURRVAL,
     'Cricket Board Administrator',
     'Board Operations',
-    'imran.hossain@pitchsync.demo',
+    'imran.hossain@pitchsync.invalid',
     DATE '2019-07-01'
 );
 
@@ -201,7 +200,7 @@ INSERT INTO admin (
     seq_admin_person.CURRVAL,
     'Team Performance Manager',
     'Team Performance',
-    'samira.ahmed@pitchsync.demo',
+    'samira.ahmed@pitchsync.invalid',
     DATE '2020-02-01'
 );
 
@@ -222,7 +221,7 @@ INSERT INTO admin (
     seq_admin_person.CURRVAL,
     'Match Official',
     'Match Operations',
-    'mahin.chowdhury@pitchsync.demo',
+    'mahin.chowdhury@pitchsync.invalid',
     DATE '2021-05-12'
 );
 
@@ -243,7 +242,7 @@ INSERT INTO admin (
     seq_admin_person.CURRVAL,
     'Integrity & Compliance Officer',
     'Integrity & Compliance',
-    'nusrat.jahan@pitchsync.demo',
+    'nusrat.jahan@pitchsync.invalid',
     DATE '2021-03-15'
 );
 
@@ -264,7 +263,7 @@ INSERT INTO admin (
     seq_admin_person.CURRVAL,
     'Integrity & Compliance Officer',
     'Integrity & Compliance',
-    'rezaul.islam@pitchsync.demo',
+    'rezaul.islam@pitchsync.invalid',
     DATE '2022-08-01'
 );
 
@@ -384,29 +383,29 @@ VALUES (
 -- 4. USER ACCOUNTS
 --------------------------------------------------------------------------------
 
-INSERT INTO user_account (person_id, username, password_hash)
-VALUES (200001, 'super.admin', 'DEMO_HASH_REPLACE_IN_BACKEND');
+INSERT INTO user_account (person_id, username, password_hash, account_status)
+VALUES (200001, 'super.admin', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
 
-INSERT INTO user_account (person_id, username, password_hash)
-VALUES (200002, 'board.admin', 'DEMO_HASH_REPLACE_IN_BACKEND');
+INSERT INTO user_account (person_id, username, password_hash, account_status)
+VALUES (200002, 'board.admin', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
 
-INSERT INTO user_account (person_id, username, password_hash)
-VALUES (200003, 'performance.manager', 'DEMO_HASH_REPLACE_IN_BACKEND');
+INSERT INTO user_account (person_id, username, password_hash, account_status)
+VALUES (200003, 'performance.manager', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
 
-INSERT INTO user_account (person_id, username, password_hash)
-VALUES (200004, 'match.official', 'DEMO_HASH_REPLACE_IN_BACKEND');
+INSERT INTO user_account (person_id, username, password_hash, account_status)
+VALUES (200004, 'match.official', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
 
-INSERT INTO user_account (person_id, username, password_hash)
-VALUES (200005, 'integrity.nusrat', 'DEMO_HASH_REPLACE_IN_BACKEND');
+INSERT INTO user_account (person_id, username, password_hash, account_status)
+VALUES (200005, 'integrity.nusrat', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
 
-INSERT INTO user_account (person_id, username, password_hash)
-VALUES (200006, 'integrity.rezaul', 'DEMO_HASH_REPLACE_IN_BACKEND');
+INSERT INTO user_account (person_id, username, password_hash, account_status)
+VALUES (200006, 'integrity.rezaul', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
 
-INSERT INTO user_account (person_id, username, password_hash)
-VALUES (100001, 'player.arif', 'DEMO_HASH_REPLACE_IN_BACKEND');
+INSERT INTO user_account (person_id, username, password_hash, account_status)
+VALUES (100001, 'player.arif', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
 
-INSERT INTO user_account (person_id, username, password_hash)
-VALUES (100004, 'player.farzana', 'DEMO_HASH_REPLACE_IN_BACKEND');
+INSERT INTO user_account (person_id, username, password_hash, account_status)
+VALUES (100004, 'player.farzana', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
 
 
 --------------------------------------------------------------------------------
