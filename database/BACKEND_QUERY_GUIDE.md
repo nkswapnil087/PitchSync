@@ -715,7 +715,230 @@ Expected result/change: Zero or more match-team rows. Read-only; no transaction 
 
 ## Matches
 
-Queries will be added with the match integration checkpoint.
+### Match registry count
+
+Purpose: Count active matches after match/team/venue search, tournament, and exact-date filters.
+
+Frontend use: Match registry pagination.
+
+Source: NEW BACKEND QUERY
+
+SQL:
+
+```sql
+SELECT COUNT(*) AS total_items
+FROM match m
+JOIN tournament tr ON tr.tournament_id = m.tournament_id
+WHERE m.is_deleted = 0 AND tr.is_deleted = 0
+  -- Optional bound match ID, venue, tournament, or participant-team search
+  -- Optional bound tournament name/ID filter
+  -- Optional TRUNC(m.match_date) = TO_DATE(:matchDate, 'YYYY-MM-DD')
+```
+
+Bind variables: Optional `search`, `tournament`, `tournamentExact`, and `matchDate`.
+
+How it works: Active matches are counted after the API selects only validated optional clauses.
+
+Expected result/change: One count row. Read-only; no transaction changes.
+
+### Paginated match registry
+
+Purpose: Return active fixtures/results with tournament and participant names.
+
+Frontend use: `/matches` table, filters, sort, and pagination.
+
+Source: Adapted from V003 catalogue query `T01_edition_fixture_and_results.sql`.
+
+SQL:
+
+```sql
+SELECT m.match_id, tr.tournament_id, tr.tournament_name,
+       (SELECT LISTAGG(t.team_name, ' vs ') WITHIN GROUP (ORDER BY t.team_id)
+          FROM includes i
+          JOIN team t ON t.team_id = i.team_id AND t.is_deleted = 0
+         WHERE i.match_id = m.match_id AND i.is_deleted = 0) AS participating_teams,
+       TO_CHAR(m.match_date, 'YYYY-MM-DD') AS match_date,
+       m.venue, m.match_format, m.match_status
+FROM match m
+JOIN tournament tr ON tr.tournament_id = m.tournament_id
+WHERE m.is_deleted = 0 AND tr.is_deleted = 0
+  -- Optional documented filters
+ORDER BY /* one server-whitelisted expression: date, id, or tournament */
+OFFSET :rowOffset ROWS FETCH NEXT :rowLimit ROWS ONLY;
+```
+
+Bind variables: Optional registry-filter binds; required `rowOffset` and `rowLimit`.
+
+How it works: Oracle performs filtering/pagination and a correlated `LISTAGG` supplies the participant display without duplicating match rows.
+
+Expected result/change: Zero or more match rows. Read-only; no transaction changes.
+
+### Match detail heading
+
+Purpose: Load one active match and its tournament/outcome fields.
+
+Frontend use: `/matches/[matchId]` header and overview.
+
+Source: Detail form of V003 catalogue query `T01_edition_fixture_and_results.sql`.
+
+SQL:
+
+```sql
+SELECT m.match_id, tr.tournament_id, tr.tournament_name,
+       TO_CHAR(m.match_date, 'YYYY-MM-DD') AS match_date,
+       m.venue, m.match_format, m.match_status, m.result, m.winner_team_id
+FROM match m
+JOIN tournament tr ON tr.tournament_id = m.tournament_id AND tr.is_deleted = 0
+WHERE m.match_id = :matchId AND m.is_deleted = 0;
+```
+
+Bind variables: `matchId`.
+
+How it works: A validated numeric match reference selects the match and active tournament edition.
+
+Expected result/change: One active match or no row. Read-only; no transaction changes.
+
+### Match participants
+
+Purpose: Load active participating teams for one match.
+
+Frontend use: Match header and Participating Teams section.
+
+Source: Participant portion of V003 catalogue query `T01_edition_fixture_and_results.sql`.
+
+SQL:
+
+```sql
+SELECT t.team_id, t.team_name, t.category, t.franchise_owner
+FROM includes i
+JOIN team t ON t.team_id = i.team_id AND t.is_deleted = 0
+WHERE i.match_id = :matchId AND i.is_deleted = 0
+ORDER BY t.team_id;
+```
+
+Bind variables: `matchId`.
+
+How it works: The physical `INCLUDES` relation powers the match's participant UI.
+
+Expected result/change: Zero or more team rows. Read-only; no transaction changes.
+
+### Match batting scorecard
+
+Purpose: Resolve batting-performance rows to their players for one match.
+
+Frontend use: Match detail Batting tab.
+
+Source: Uses the same performance-to-summary-to-career chain as V003 `P03_match_by_match_tournament_scorecard.sql`.
+
+SQL:
+
+```sql
+SELECT bp.bat_stat_id AS performance_id, p.person_id,
+       p.first_name || ' ' || p.last_name AS full_name,
+       pl.player_role, pl.gender, bp.runs_scored, bp.balls_faced,
+       bp.strike_rate, bp.dismissal_type
+FROM batting_performance bp
+JOIN batting_summary bs ON bs.bat_summary_id = bp.bat_summary_id AND bs.is_deleted = 0
+JOIN career_record cr ON cr.record_id = bs.record_id AND cr.is_deleted = 0
+JOIN player pl ON pl.person_id = cr.person_id AND pl.is_deleted = 0
+JOIN person p ON p.person_id = pl.person_id AND p.is_deleted = 0
+WHERE bp.match_id = :matchId AND bp.is_deleted = 0
+ORDER BY bp.runs_scored DESC, p.person_id;
+```
+
+Bind variables: `matchId`.
+
+How it works: V003 summary and career foreign keys resolve each stat row to its active player.
+
+Expected result/change: Zero or more batting rows. Read-only; no transaction changes.
+
+### Match bowling scorecard
+
+Purpose: Resolve bowling-performance rows to their players for one match.
+
+Frontend use: Match detail Bowling tab.
+
+Source: Uses the V003 performance-to-summary-to-career relationship.
+
+SQL:
+
+```sql
+SELECT bp.bowl_stat_id AS performance_id, p.person_id,
+       p.first_name || ' ' || p.last_name AS full_name,
+       pl.player_role, pl.gender, bp.wickets_taken, bp.balls_bowled,
+       bp.runs_conceded, bp.economy_rate
+FROM bowling_performance bp
+JOIN bowling_summary bs ON bs.bowl_summary_id = bp.bowl_summary_id AND bs.is_deleted = 0
+JOIN career_record cr ON cr.record_id = bs.record_id AND cr.is_deleted = 0
+JOIN player pl ON pl.person_id = cr.person_id AND pl.is_deleted = 0
+JOIN person p ON p.person_id = pl.person_id AND p.is_deleted = 0
+WHERE bp.match_id = :matchId AND bp.is_deleted = 0
+ORDER BY bp.wickets_taken DESC, p.person_id;
+```
+
+Bind variables: `matchId`.
+
+How it works: The server formats `balls_bowled` into cricket overs after resolving active player identity.
+
+Expected result/change: Zero or more bowling rows. Read-only; no transaction changes.
+
+### Match fielding scorecard
+
+Purpose: Resolve fielding-performance rows to their players for one match.
+
+Frontend use: Match detail Fielding tab.
+
+Source: Uses the V003 performance-to-summary-to-career relationship.
+
+SQL:
+
+```sql
+SELECT fp.field_stat_id AS performance_id, p.person_id,
+       p.first_name || ' ' || p.last_name AS full_name,
+       pl.player_role, pl.gender, fp.catches, fp.stumpings,
+       fp.runs_out_direct, fp.byes_conceded
+FROM fielding_performance fp
+JOIN fielding_summary fs ON fs.field_summary_id = fp.field_summary_id AND fs.is_deleted = 0
+JOIN career_record cr ON cr.record_id = fs.record_id AND cr.is_deleted = 0
+JOIN player pl ON pl.person_id = cr.person_id AND pl.is_deleted = 0
+JOIN person p ON p.person_id = pl.person_id AND p.is_deleted = 0
+WHERE fp.match_id = :matchId AND fp.is_deleted = 0
+ORDER BY fp.catches DESC, p.person_id;
+```
+
+Bind variables: `matchId`.
+
+How it works: The V003 foreign-key chain resolves the stat row to a player without duplicating stored identity data.
+
+Expected result/change: Zero or more fielding rows. Read-only; no transaction changes.
+
+### Match administrative observations
+
+Purpose: Load administrator observations and both participant names for one match.
+
+Frontend use: Match detail Administrative Observations tab.
+
+Source: Detail form of V003 administration query concepts around `OBSERVES` (including `A08`/`A09`).
+
+SQL:
+
+```sql
+SELECT o.admin_id, ap.first_name || ' ' || ap.last_name AS admin_name,
+       o.player_id, pp.first_name || ' ' || pp.last_name AS player_name,
+       TO_CHAR(o.observation_date, 'YYYY-MM-DD') AS observation_date,
+       o.remarks
+FROM observes o
+JOIN person ap ON ap.person_id = o.admin_id AND ap.is_deleted = 0
+JOIN person pp ON pp.person_id = o.player_id AND pp.is_deleted = 0
+WHERE o.match_id = :matchId AND o.is_deleted = 0
+ORDER BY o.observation_date DESC, o.admin_id, o.player_id;
+```
+
+Bind variables: `matchId`.
+
+How it works: Both administrator and player PERSON rows are joined with separate aliases to present readable observation attribution.
+
+Expected result/change: Zero or more observation rows. Read-only; no transaction changes.
 
 ## Performance / Career
 

@@ -165,7 +165,9 @@ export type FieldingPerformance = {
 
 export type MatchObservation = {
   administratorId: string;
+  administratorName?: string;
   playerId: string;
+  playerName?: string;
   observationDate: string;
   remarks?: string;
 };
@@ -175,6 +177,17 @@ export type MatchRecord = MatchSummary & {
   bowling: readonly BowlingPerformance[];
   fielding: readonly FieldingPerformance[];
   observations: readonly MatchObservation[];
+};
+
+export type MatchListItem = {
+  matchId: string;
+  tournamentId: string;
+  tournamentName: string;
+  participatingTeams: string;
+  matchDate: string;
+  venue: string;
+  format: string;
+  status: string;
 };
 
 export type ComplaintRecord = {
