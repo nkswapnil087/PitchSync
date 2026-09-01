@@ -3,14 +3,14 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { getRole } from "@/config/roles";
-import { useDemoAuth } from "@/features/demo-auth";
+import { useAuth } from "@/features/auth";
 import { Sidebar } from "@/components/navigation/sidebar";
 import { TopBar } from "./top-bar";
 import { MainContent } from "./main-content";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [navigationOpen, setNavigationOpen] = useState(false);
-  const { role: roleId } = useDemoAuth();
+  const { role: roleId } = useAuth();
   const role = getRole(roleId);
   if (!role) return null;
   const style = { "--primary": role.accent, "--primary-hover": role.accentHover, "--primary-soft": role.accentSoft } as React.CSSProperties;

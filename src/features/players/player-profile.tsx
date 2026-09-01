@@ -13,7 +13,7 @@ import { TabNavigation } from "@/components/navigation/tab-navigation";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import type { PlayerRecord } from "@/data/contracts";
-import { useDemoAuth } from "@/features/demo-auth";
+import { useAuth } from "@/features/auth";
 import { useApiData } from "@/features/shared/use-api-data";
 
 const tabs = [
@@ -114,7 +114,7 @@ function renderPlayer(player: PlayerRecord, canEdit: boolean) {
 }
 
 export function PlayerProfile({ playerId }: { playerId: string }) {
-  const { role } = useDemoAuth();
+  const { role } = useAuth();
   const canEdit = role === "super-admin" || role === "board-admin";
   const state = useApiData<PlayerRecord>(`/api/players/${encodeURIComponent(playerId)}`);
 

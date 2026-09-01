@@ -1,4 +1,4 @@
-import type { RoleId } from "@/features/demo-auth/types";
+import type { RoleId } from "@/features/auth/types";
 
 const allRoles: readonly RoleId[] = [
   "super-admin",

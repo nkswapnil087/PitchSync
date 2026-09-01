@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { BadgeCheck, ClipboardCheck, ShieldCheck, Swords, UserRound, UsersRound } from "lucide-react";
-import type { RoleId } from "@/features/demo-auth/types";
+import type { RoleId } from "@/features/auth/types";
 
 export type RoleDefinition = {
   id: RoleId;

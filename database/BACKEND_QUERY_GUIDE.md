@@ -28,7 +28,81 @@ Result: One row containing `PITCHSYNC_OWNER` and `PITCHPDB` for the approved loc
 
 ## Authentication
 
-Queries will be added with the authentication checkpoint.
+### Active login account lookup
+
+Purpose: Resolve an active V003 account, person, and application role by username or administrator email before password verification.
+
+Frontend use: `POST /api/auth/login`.
+
+Source: Application login form of the V003 account-directory relationship used in catalogue query `A01_admin_account_directory.sql`.
+
+SQL:
+
+```sql
+SELECT ua.account_id, ua.person_id, ua.username, ua.password_hash,
+       p.first_name || ' ' || p.last_name AS full_name,
+       a.designation, pl.person_id AS player_id
+FROM user_account ua
+JOIN person p ON p.person_id = ua.person_id AND p.is_deleted = 0
+LEFT JOIN admin a ON a.person_id = ua.person_id AND a.is_deleted = 0
+LEFT JOIN player pl ON pl.person_id = ua.person_id AND pl.is_deleted = 0
+WHERE (LOWER(ua.username) = LOWER(:identifier)
+       OR LOWER(a.email) = LOWER(:identifier))
+  AND ua.account_status = 'ACTIVE'
+  AND ua.is_deleted = 0;
+```
+
+Bind variables: `identifier`.
+
+How it works: The server derives the approved role from ADMIN designation or PLAYER specialization, verifies that it matches the selected role, and compares the submitted password to `password_hash` with bcrypt. The hash is never returned to the browser.
+
+Expected result/change: One eligible account or no row. Read-only; no transaction changes.
+
+### Successful-login timestamp
+
+Purpose: Record the most recent successful authentication time.
+
+Frontend use: Successful `POST /api/auth/login` transaction.
+
+Source: NEW BACKEND QUERY
+
+SQL:
+
+```sql
+UPDATE user_account
+SET last_login = SYSTIMESTAMP
+WHERE account_id = :accountId AND is_deleted = 0;
+```
+
+Bind variables: `accountId` from the already authenticated account row.
+
+How it works: This statement executes only after password and selected-role verification succeeds.
+
+Expected result/change: One account timestamp updated. It commits with the login transaction; any failure rolls back.
+
+### Local account activation
+
+Purpose: Replace V003's intentionally unusable seed marker with a bcrypt hash and activate each existing local account without creating another account table.
+
+Frontend use: One-time `npm run auth:activate-local` local setup; credentials are stored only in the Git-ignored local credentials file.
+
+Source: NEW LOCAL SETUP QUERY
+
+SQL:
+
+```sql
+UPDATE user_account
+SET password_hash = :passwordHash,
+    account_status = 'ACTIVE',
+    is_deleted = 0
+WHERE username = :username;
+```
+
+Bind variables: `passwordHash` (bcrypt cost 12) and each fixed local V003 `username`.
+
+How it works: The setup script verifies the exact `localhost:1522/PITCHPDB` target, updates all eight existing seed accounts in one transaction, and never prints the password or hash.
+
+Expected result/change: Eight existing local accounts activated. All updates commit together; any mismatch or error rolls back.
 
 ## Players
 

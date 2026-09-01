@@ -1,5 +1,5 @@
 import { PitchSyncMark } from "@/components/branding/pitchsync-mark";
-import { SignInForm } from "@/features/demo-auth/sign-in-form";
+import { SignInForm } from "@/features/auth/sign-in-form";
 
 import styles from "./page.module.css";
 

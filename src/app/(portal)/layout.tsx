@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/layout/app-shell";
-import { DemoRouteGuard } from "@/features/demo-auth";
+import { RouteGuard } from "@/features/auth";
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
-  return <DemoRouteGuard><AppShell>{children}</AppShell></DemoRouteGuard>;
+  return <RouteGuard><AppShell>{children}</AppShell></RouteGuard>;
 }

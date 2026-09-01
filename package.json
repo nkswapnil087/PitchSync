@@ -9,7 +9,8 @@
     "build": "next build",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "env:setup": "node scripts/setup-local-env.mjs"
+    "env:setup": "node scripts/setup-local-env.mjs",
+    "auth:activate-local": "node scripts/activate-local-accounts.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "latest",

@@ -12,7 +12,7 @@ import {
   UserRound,
   UsersRound,
 } from "lucide-react";
-import type { RoleId } from "@/features/demo-auth/types";
+import type { RoleId } from "@/features/auth/types";
 
 export type NavigationItem = {
   label: string;

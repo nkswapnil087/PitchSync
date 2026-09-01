@@ -6,7 +6,10 @@ export type RoleId =
   | "integrity-officer"
   | "player";
 
-export type DemoSession = {
-  signedIn: boolean;
-  role: RoleId | null;
+export type AuthSession = {
+  accountId: string;
+  personId: string;
+  username: string;
+  fullName: string;
+  role: RoleId;
 };

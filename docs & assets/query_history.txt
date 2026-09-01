@@ -365,3 +365,40 @@ Queries against USER_TABLES, USER_CONSTRAINTS, USER_SEQUENCES, USER_TYPES, USER_
 
 Result:
 SESSION_USER = PITCHSYNC_OWNER; CONTAINER_NAME = PITCHPDB; 32 tables; 226 committed rows; every PK/FK/unique/check constraint enabled and validated; 15 explicit indexes valid; 2 triggers enabled; 0 invalid objects.
+
+Reason:
+Activate the existing V003 local USER_ACCOUNT rows for database-backed application authentication.
+
+Type:
+UPDATE / LOCAL APPLICATION ACCOUNT SETUP
+
+Status:
+EXECUTED SUCCESSFULLY
+
+Target:
+PITCHSYNC_OWNER@localhost:1522/PITCHPDB
+
+SQL:
+UPDATE user_account
+SET password_hash = :passwordHash,
+    account_status = 'ACTIVE',
+    is_deleted = 0
+WHERE username = :username;
+
+Result:
+Eight existing V003 seed accounts were updated and committed as ACTIVE with bcrypt password hashes. No usernames, passwords, hashes, or Oracle credentials were added to this history.
+
+Reason:
+Verify database-backed login, selected-role enforcement, session cookies, server-side API authorization, player self-access, and sign-in timestamp persistence.
+
+Type:
+SELECT / UPDATE / AUTHENTICATION VERIFICATION
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+The documented active-login account lookup and successful-login timestamp update in database/BACKEND_QUERY_GUIDE.md.
+
+Result:
+Correct account/role combinations authenticated; a mismatched selected role returned 401; an unauthenticated protected API returned 401; an unauthorized role and cross-player request returned 403; permitted resources returned 200. Successful login timestamps were committed for the tested accounts. No secrets were logged.
