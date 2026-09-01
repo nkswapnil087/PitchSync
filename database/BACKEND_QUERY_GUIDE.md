@@ -534,7 +534,184 @@ Expected result/change: Zero or more match-participant rows. Read-only; no trans
 
 ## Tournaments
 
-Queries will be added with the tournament integration checkpoint.
+### Tournament registry count
+
+Purpose: Count active tournament editions after name/ID/season search and tier filtering.
+
+Frontend use: Tournament registry pagination.
+
+Source: NEW BACKEND QUERY
+
+SQL:
+
+```sql
+SELECT COUNT(*) AS total_items
+FROM tournament tr
+WHERE tr.is_deleted = 0
+  -- Optional bound name/id/season search
+  -- Optional bound tier contains filter
+```
+
+Bind variables: Optional `search` and `tier`.
+
+How it works: Only active tournament editions matching validated optional filters are counted.
+
+Expected result/change: One count row. Read-only; no transaction changes.
+
+### Paginated tournament registry
+
+Purpose: Return active tournament editions with sponsor, participant-team, and match counts.
+
+Frontend use: `/tournaments` table, search, tier filter, sort, and pagination.
+
+Source: Combines the sponsor-coverage concept from V003 catalogue query `T06_sponsor_coverage.sql` with edition relationship counts.
+
+SQL:
+
+```sql
+SELECT tr.tournament_id, tr.tournament_name,
+       tr.tournament_tier_level, tr.season_year,
+       (SELECT COUNT(*) FROM tournament_sponsor ts
+         WHERE ts.tournament_id = tr.tournament_id AND ts.is_deleted = 0) AS sponsor_count,
+       (SELECT COUNT(DISTINCT i.team_id)
+          FROM match m
+          JOIN includes i ON i.match_id = m.match_id AND i.is_deleted = 0
+         WHERE m.tournament_id = tr.tournament_id AND m.is_deleted = 0) AS team_count,
+       (SELECT COUNT(*) FROM match m
+         WHERE m.tournament_id = tr.tournament_id AND m.is_deleted = 0) AS match_count
+FROM tournament tr
+WHERE tr.is_deleted = 0
+  -- Optional documented search/tier clauses
+ORDER BY /* one server-whitelisted expression: name, id, or season */
+OFFSET :rowOffset ROWS FETCH NEXT :rowLimit ROWS ONLY;
+```
+
+Bind variables: Optional `search`, `tier`; required `rowOffset` and `rowLimit`.
+
+How it works: The edition remains the root record and Oracle computes counts through active sponsor, match, and participant junction rows.
+
+Expected result/change: Zero or more tournament rows. Read-only; no transaction changes.
+
+### Tournament detail heading
+
+Purpose: Load one active tournament edition and its relationship counts.
+
+Frontend use: `/tournaments/[tournamentId]` header and overview.
+
+Source: NEW BACKEND QUERY; same projections as the registry query with an exact key predicate.
+
+SQL:
+
+```sql
+SELECT tr.tournament_id, tr.tournament_name,
+       tr.tournament_tier_level, tr.season_year,
+       /* active sponsor, distinct participant-team, and match count subqueries */
+FROM tournament tr
+WHERE tr.tournament_id = :tournamentId AND tr.is_deleted = 0;
+```
+
+Bind variables: `tournamentId`.
+
+How it works: A validated edition key selects the active tournament and related counts.
+
+Expected result/change: One active tournament or no row. Read-only; no transaction changes.
+
+### Tournament sponsors
+
+Purpose: Load all active sponsors for one tournament edition.
+
+Frontend use: Tournament detail Sponsors tab.
+
+Source: Detail form of V003 catalogue query `T06_sponsor_coverage.sql`.
+
+SQL:
+
+```sql
+SELECT sponsor AS value
+FROM tournament_sponsor
+WHERE tournament_id = :tournamentId AND is_deleted = 0
+ORDER BY sponsor;
+```
+
+Bind variables: `tournamentId`.
+
+How it works: Sponsor values are selected from their multivalued edition relation in deterministic order.
+
+Expected result/change: Zero or more sponsor rows. Read-only; no transaction changes.
+
+### Tournament participating teams
+
+Purpose: Load distinct active teams participating in an edition's matches.
+
+Frontend use: Tournament detail Participating Teams tab.
+
+Source: NEW BACKEND QUERY
+
+SQL:
+
+```sql
+SELECT DISTINCT t.team_id, t.team_name, t.category, t.franchise_owner
+FROM match m
+JOIN includes i ON i.match_id = m.match_id AND i.is_deleted = 0
+JOIN team t ON t.team_id = i.team_id AND t.is_deleted = 0
+WHERE m.tournament_id = :tournamentId AND m.is_deleted = 0
+ORDER BY t.team_name, t.team_id;
+```
+
+Bind variables: `tournamentId`.
+
+How it works: Participation is derived through `MATCH` and `INCLUDES`; no unsupported direct tournament-team record is invented.
+
+Expected result/change: Zero or more distinct team rows. Read-only; no transaction changes.
+
+### Tournament matches
+
+Purpose: Load match headings for one tournament edition.
+
+Frontend use: Tournament detail Matches tab.
+
+Source: Detail projection adapted from V003 catalogue query `T01_edition_fixture_and_results.sql`.
+
+SQL:
+
+```sql
+SELECT m.match_id, TO_CHAR(m.match_date, 'YYYY-MM-DD') AS match_date,
+       m.venue, m.match_format, m.match_status, m.result, m.winner_team_id
+FROM match m
+WHERE m.tournament_id = :tournamentId AND m.is_deleted = 0
+ORDER BY m.match_date, m.match_id;
+```
+
+Bind variables: `tournamentId`.
+
+How it works: The physical V003 match presentation fields are returned as optional detail data while the edition/date/venue/teams remain the core UI model.
+
+Expected result/change: Zero or more match rows. Read-only; no transaction changes.
+
+### Tournament match participants
+
+Purpose: Load the active team participants for every match in an edition.
+
+Frontend use: Teams column in the Tournament detail Matches tab.
+
+Source: Participant portion of V003 catalogue query `T01_edition_fixture_and_results.sql`.
+
+SQL:
+
+```sql
+SELECT i.match_id, t.team_id, t.team_name, t.category, t.franchise_owner
+FROM match m
+JOIN includes i ON i.match_id = m.match_id AND i.is_deleted = 0
+JOIN team t ON t.team_id = i.team_id AND t.is_deleted = 0
+WHERE m.tournament_id = :tournamentId AND m.is_deleted = 0
+ORDER BY i.match_id, t.team_id;
+```
+
+Bind variables: `tournamentId`.
+
+How it works: Participant rows are fetched once and grouped by match ID in the server response.
+
+Expected result/change: Zero or more match-team rows. Read-only; no transaction changes.
 
 ## Matches
 

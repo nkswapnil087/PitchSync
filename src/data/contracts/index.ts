@@ -99,6 +99,10 @@ export type MatchSummary = {
   matchDate: string;
   venue: string;
   teams: readonly TeamSummary[];
+  format?: string;
+  status?: string;
+  result?: string;
+  winnerTeamId?: string;
 };
 
 export type TeamRecord = TeamSummary & {
@@ -116,9 +120,20 @@ export type TournamentRecord = {
   tournamentId: string;
   tournamentName: string;
   tierLevel: string;
+  seasonYear?: number;
   sponsors: readonly string[];
   teams: readonly TeamSummary[];
   matches: readonly MatchSummary[];
+};
+
+export type TournamentListItem = {
+  tournamentId: string;
+  tournamentName: string;
+  tierLevel: string;
+  seasonYear?: number;
+  sponsorCount: number;
+  teamCount: number;
+  matchCount: number;
 };
 
 export type BattingPerformance = {
