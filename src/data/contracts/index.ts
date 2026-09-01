@@ -136,6 +136,38 @@ export type TournamentListItem = {
   matchCount: number;
 };
 
+export type PlayerPerformanceListItem = PlayerSummary & {
+  careerRecordCount: number;
+  matchesPlayed: number;
+  battingSummaryCount: number;
+  bowlingSummaryCount: number;
+  fieldingSummaryCount: number;
+};
+
+export type PlayerBattingMatchPerformance = Omit<BattingPerformance, "player"> & {
+  matchId: string;
+  matchDate: string;
+  venue: string;
+};
+
+export type PlayerBowlingMatchPerformance = Omit<BowlingPerformance, "player"> & {
+  matchId: string;
+  matchDate: string;
+  venue: string;
+};
+
+export type PlayerFieldingMatchPerformance = Omit<FieldingPerformance, "player"> & {
+  matchId: string;
+  matchDate: string;
+  venue: string;
+};
+
+export type PlayerPerformanceRecord = PlayerRecord & {
+  battingPerformances: readonly PlayerBattingMatchPerformance[];
+  bowlingPerformances: readonly PlayerBowlingMatchPerformance[];
+  fieldingPerformances: readonly PlayerFieldingMatchPerformance[];
+};
+
 export type BattingPerformance = {
   performanceId: string;
   player: PlayerSummary;

@@ -942,7 +942,157 @@ Expected result/change: Zero or more observation rows. Read-only; no transaction
 
 ## Performance / Career
 
-Queries will be added with the performance integration checkpoint.
+The performance detail endpoint reuses all documented Player profile identity, relationship, career, and summary queries before adding the match-level statements below.
+
+### Performance registry count
+
+Purpose: Count active players after player, career tier, and summary-format filters.
+
+Frontend use: Performance registry pagination.
+
+Source: NEW BACKEND QUERY
+
+SQL:
+
+```sql
+SELECT COUNT(*) AS total_items
+FROM person p
+JOIN player pl ON pl.person_id = p.person_id
+WHERE p.is_deleted = 0 AND pl.is_deleted = 0
+  -- Optional bound player name/ID search
+  -- Optional EXISTS active CAREER_RECORD matching :tier
+  -- Optional EXISTS active batting/bowling/fielding summary matching :matchFormat
+```
+
+Bind variables: Optional `search`, `tier`, and `matchFormat`.
+
+How it works: `EXISTS` filters constrain players without multiplying result rows across career and summary relations.
+
+Expected result/change: One count row. Read-only; no transaction changes.
+
+### Paginated performance registry
+
+Purpose: Return one row per active player with career coverage and aggregate counts.
+
+Frontend use: `/performance/players` table, filters, server-side sort, and pagination.
+
+Source: NEW BACKEND QUERY using V003 career/summary relations.
+
+SQL:
+
+```sql
+SELECT p.person_id, p.first_name || ' ' || p.last_name AS full_name,
+       pl.player_role, pl.gender,
+       (SELECT COUNT(*) FROM career_record cr
+         WHERE cr.person_id = p.person_id AND cr.is_deleted = 0) AS career_record_count,
+       (SELECT NVL(SUM(cr.matches_played), 0) FROM career_record cr
+         WHERE cr.person_id = p.person_id AND cr.is_deleted = 0) AS matches_played,
+       (SELECT COUNT(*) FROM batting_summary bs JOIN career_record cr
+          ON cr.record_id = bs.record_id AND cr.is_deleted = 0
+         WHERE cr.person_id = p.person_id AND bs.is_deleted = 0) AS batting_summary_count,
+       (SELECT COUNT(*) FROM bowling_summary bs JOIN career_record cr
+          ON cr.record_id = bs.record_id AND cr.is_deleted = 0
+         WHERE cr.person_id = p.person_id AND bs.is_deleted = 0) AS bowling_summary_count,
+       (SELECT COUNT(*) FROM fielding_summary fs JOIN career_record cr
+          ON cr.record_id = fs.record_id AND cr.is_deleted = 0
+         WHERE cr.person_id = p.person_id AND fs.is_deleted = 0) AS fielding_summary_count
+FROM person p
+JOIN player pl ON pl.person_id = p.person_id
+WHERE p.is_deleted = 0 AND pl.is_deleted = 0
+  -- Optional documented filters
+ORDER BY /* one server-whitelisted expression: name, matches, or id */
+OFFSET :rowOffset ROWS FETCH NEXT :rowLimit ROWS ONLY;
+```
+
+Bind variables: Optional registry-filter binds; required `rowOffset` and `rowLimit`.
+
+How it works: Correlated subqueries calculate each metric independently while preserving exactly one player row.
+
+Expected result/change: Zero or more player-performance rows. Read-only; no transaction changes.
+
+### Player match batting performance
+
+Purpose: Load a player's active match-level batting history.
+
+Frontend use: Player performance Batting tab.
+
+Source: Player-scoped form of V003 catalogue query `P03_match_by_match_tournament_scorecard.sql`.
+
+SQL:
+
+```sql
+SELECT bp.bat_stat_id AS performance_id, m.match_id,
+       TO_CHAR(m.match_date, 'YYYY-MM-DD') AS match_date, m.venue,
+       bp.runs_scored, bp.balls_faced, bp.strike_rate, bp.dismissal_type
+FROM career_record cr
+JOIN batting_summary bs ON bs.record_id = cr.record_id AND bs.is_deleted = 0
+JOIN batting_performance bp ON bp.bat_summary_id = bs.bat_summary_id AND bp.is_deleted = 0
+JOIN match m ON m.match_id = bp.match_id AND m.is_deleted = 0
+WHERE cr.person_id = :playerId AND cr.is_deleted = 0
+ORDER BY m.match_date DESC, m.match_id DESC;
+```
+
+Bind variables: `playerId`.
+
+How it works: The V003 career-summary-performance chain resolves all active batting transactions for the selected player.
+
+Expected result/change: Zero or more batting performances. Read-only; no transaction changes.
+
+### Player match bowling performance
+
+Purpose: Load a player's active match-level bowling history.
+
+Frontend use: Player performance Bowling tab.
+
+Source: Player-scoped form of V003 catalogue query `P03_match_by_match_tournament_scorecard.sql`.
+
+SQL:
+
+```sql
+SELECT bp.bowl_stat_id AS performance_id, m.match_id,
+       TO_CHAR(m.match_date, 'YYYY-MM-DD') AS match_date, m.venue,
+       bp.wickets_taken, bp.balls_bowled, bp.runs_conceded, bp.economy_rate
+FROM career_record cr
+JOIN bowling_summary bs ON bs.record_id = cr.record_id AND bs.is_deleted = 0
+JOIN bowling_performance bp ON bp.bowl_summary_id = bs.bowl_summary_id AND bp.is_deleted = 0
+JOIN match m ON m.match_id = bp.match_id AND m.is_deleted = 0
+WHERE cr.person_id = :playerId AND cr.is_deleted = 0
+ORDER BY m.match_date DESC, m.match_id DESC;
+```
+
+Bind variables: `playerId`.
+
+How it works: The API resolves bowling transactions to the player and converts balls into cricket-over notation.
+
+Expected result/change: Zero or more bowling performances. Read-only; no transaction changes.
+
+### Player match fielding performance
+
+Purpose: Load a player's active match-level fielding history.
+
+Frontend use: Player performance Fielding tab.
+
+Source: Player-scoped form of V003 catalogue query `P03_match_by_match_tournament_scorecard.sql`.
+
+SQL:
+
+```sql
+SELECT fp.field_stat_id AS performance_id, m.match_id,
+       TO_CHAR(m.match_date, 'YYYY-MM-DD') AS match_date, m.venue,
+       fp.catches, fp.stumpings, fp.runs_out_direct, fp.byes_conceded
+FROM career_record cr
+JOIN fielding_summary fs ON fs.record_id = cr.record_id AND fs.is_deleted = 0
+JOIN fielding_performance fp ON fp.field_summary_id = fs.field_summary_id AND fp.is_deleted = 0
+JOIN match m ON m.match_id = fp.match_id AND m.is_deleted = 0
+WHERE cr.person_id = :playerId AND cr.is_deleted = 0
+ORDER BY m.match_date DESC, m.match_id DESC;
+```
+
+Bind variables: `playerId`.
+
+How it works: The V003 career-summary-performance chain resolves all active fielding transactions for the selected player.
+
+Expected result/change: Zero or more fielding performances. Read-only; no transaction changes.
 
 ## Integrity
 
