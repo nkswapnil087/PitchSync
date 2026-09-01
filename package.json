@@ -8,7 +8,8 @@
     "start": "next start",
     "build": "next build",
     "lint": "eslint . --max-warnings=0",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "env:setup": "node scripts/setup-local-env.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "latest",
@@ -16,11 +17,14 @@
     "@radix-ui/react-select": "latest",
     "@radix-ui/react-slot": "latest",
     "@radix-ui/react-tabs": "latest",
+    "bcryptjs": "^3.0.3",
     "class-variance-authority": "latest",
     "clsx": "latest",
     "framer-motion": "latest",
+    "jose": "^6.2.10",
     "lucide-react": "latest",
     "next": "latest",
+    "oracledb": "^7.0.1",
     "react": "latest",
     "react-dom": "latest",
     "react-hook-form": "latest",
@@ -31,6 +35,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "latest",
     "@types/node": "latest",
+    "@types/oracledb": "^7.0.2",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "eslint": "latest",
