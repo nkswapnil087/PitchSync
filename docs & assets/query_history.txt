@@ -432,3 +432,18 @@ The dashboard queries documented in database/BACKEND_QUERY_GUIDE.md together wit
 
 Result:
 All six approved roles authenticated and received HTTP 200 from the dashboard API. Every response returned four live Oracle-backed metrics and correctly shaped role-specific tables; player results were restricted to the signed-session person ID. No secrets were logged.
+
+Reason:
+Final submission smoke verification of the authenticated player create, update, read-back, audit, and soft-delete transaction path.
+
+Type:
+INSERT / UPDATE / SOFT DELETE / SELECT / TRANSACTION VERIFICATION
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+The documented bind-variable player write and audit statements in database/BACKEND_QUERY_GUIDE.md, executed through the authenticated Next.js APIs, followed by a direct read-only Oracle verification query.
+
+Result:
+Temporary player 100041 was created, read back with structured address and collection values, updated, and soft-deleted. Direct verification against PITCHSYNC_OWNER in PITCHPDB confirmed PERSON and PLAYER are deleted, all form-managed child rows are inactive, and exactly three PLAYER audit operations were recorded. The record remains only as soft-deleted audit history. No secrets were logged.
