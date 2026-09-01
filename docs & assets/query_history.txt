@@ -417,3 +417,18 @@ The documented player write transaction statements in database/BACKEND_QUERY_GUI
 
 Result:
 A temporary verification player was created across PERSON and PLAYER, read through the detail API, updated with structured address and achievement values, read again, and soft-deleted. The create returned 201, update and delete returned 200, and the soft-deleted record subsequently returned 404. Invalid future-date input returned 400 before database execution, and a Team Performance Manager write attempt returned 403. The verification record remains only as soft-deleted history and the committed AUDIT_LOG rows record INSERT, UPDATE, and DELETE. No secrets were logged.
+
+Reason:
+Verify the role-aware dashboard reads against PITCHSYNC_OWNER on localhost:1522/PITCHPDB.
+
+Type:
+SELECT / AUTHENTICATED API VERIFICATION
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+The dashboard queries documented in database/BACKEND_QUERY_GUIDE.md together with the previously documented registry/detail queries reused by GET /api/dashboard.
+
+Result:
+All six approved roles authenticated and received HTTP 200 from the dashboard API. Every response returned four live Oracle-backed metrics and correctly shaped role-specific tables; player results were restricted to the signed-session person ID. No secrets were logged.

@@ -42,6 +42,7 @@ export async function proxy(request: NextRequest) {
 
   if (pathname.startsWith("/api/")) {
     if (!session) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    if (pathname === "/api/dashboard") return NextResponse.next();
     const frontendRoute = apiFrontendRoute(pathname);
     if (!frontendRoute || !canAccessRoute(session.role, frontendRoute) || (session.role === "player" && !isOwnPlayerRoute(pathname, session.personId))) return NextResponse.json({ error: "You are not authorized to access this resource." }, { status: 403 });
     return NextResponse.next();

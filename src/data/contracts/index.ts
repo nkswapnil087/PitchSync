@@ -50,6 +50,21 @@ export type PaginationMetadata = {
   totalPages: number;
 };
 
+export type DashboardMetricValues = readonly [number, number, number, number];
+
+export type DashboardTableRow = {
+  key: string;
+  cells: readonly string[];
+  href?: string;
+};
+
+export type DashboardOverviewData = {
+  metricValues: DashboardMetricValues;
+  primaryRows: readonly DashboardTableRow[];
+  secondaryRows: readonly DashboardTableRow[];
+  tertiaryRows: readonly DashboardTableRow[];
+};
+
 export type BattingSummary = {
   summaryId: string;
   format: string;

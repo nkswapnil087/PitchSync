@@ -104,6 +104,189 @@ How it works: The setup script verifies the exact `localhost:1522/PITCHPDB` targ
 
 Expected result/change: Eight existing local accounts activated. All updates commit together; any mismatch or error rolls back.
 
+## Role dashboards
+
+The dashboard API reuses the documented player, team, tournament, match, performance-player, complaint, case, and player-performance detail queries with `page = 1` and a five-row limit. It maps those existing queries to `/api/dashboard` according to the authenticated role; the player role always binds the person identifier from the signed session.
+
+### Performance dashboard totals
+
+Purpose: Count active career and format-summary records for the Team Performance Manager dashboard.
+
+Frontend use: `/performance/dashboard` through `GET /api/dashboard`.
+
+Source: NEW BACKEND READ.
+
+SQL:
+
+```sql
+SELECT
+  (SELECT COUNT(*) FROM career_record WHERE is_deleted = 0) AS career_count,
+  (SELECT COUNT(*) FROM batting_summary WHERE is_deleted = 0) AS batting_count,
+  (SELECT COUNT(*) FROM bowling_summary WHERE is_deleted = 0) AS bowling_count,
+  (SELECT COUNT(*) FROM fielding_summary WHERE is_deleted = 0) AS fielding_count
+FROM dual;
+```
+
+Bind variables: None.
+
+How it works: Independent scalar counts return one metric row and consistently exclude soft-deleted records.
+
+Expected result/change: One totals row. Read-only; no transaction changes.
+
+### Recent match-performance coverage
+
+Purpose: Show the latest player/match combinations and which performance categories have records.
+
+Frontend use: Performance dashboard match-performance table.
+
+Source: NEW BACKEND READ using the V003 performance relationships.
+
+SQL:
+
+```sql
+WITH performance_entry AS (
+  SELECT bp.match_id, cr.person_id, 'BATTING' AS performance_type
+  FROM batting_performance bp
+  JOIN batting_summary bs ON bs.bat_summary_id = bp.bat_summary_id AND bs.is_deleted = 0
+  JOIN career_record cr ON cr.record_id = bs.record_id AND cr.is_deleted = 0
+  WHERE bp.is_deleted = 0
+  UNION ALL
+  SELECT bp.match_id, cr.person_id, 'BOWLING'
+  FROM bowling_performance bp
+  JOIN bowling_summary bs ON bs.bowl_summary_id = bp.bowl_summary_id AND bs.is_deleted = 0
+  JOIN career_record cr ON cr.record_id = bs.record_id AND cr.is_deleted = 0
+  WHERE bp.is_deleted = 0
+  UNION ALL
+  SELECT fp.match_id, cr.person_id, 'FIELDING'
+  FROM fielding_performance fp
+  JOIN fielding_summary fs ON fs.field_summary_id = fp.field_summary_id AND fs.is_deleted = 0
+  JOIN career_record cr ON cr.record_id = fs.record_id AND cr.is_deleted = 0
+  WHERE fp.is_deleted = 0
+)
+SELECT pe.match_id, TO_CHAR(m.match_date, 'YYYY-MM-DD') AS match_date, p.person_id,
+       p.first_name || ' ' || p.last_name AS player_name,
+       SUM(CASE WHEN pe.performance_type = 'BATTING' THEN 1 ELSE 0 END) AS batting_count,
+       SUM(CASE WHEN pe.performance_type = 'BOWLING' THEN 1 ELSE 0 END) AS bowling_count,
+       SUM(CASE WHEN pe.performance_type = 'FIELDING' THEN 1 ELSE 0 END) AS fielding_count
+FROM performance_entry pe
+JOIN match m ON m.match_id = pe.match_id AND m.is_deleted = 0
+JOIN person p ON p.person_id = pe.person_id AND p.is_deleted = 0
+JOIN player pl ON pl.person_id = p.person_id AND pl.is_deleted = 0
+GROUP BY pe.match_id, m.match_date, p.person_id, p.first_name, p.last_name
+ORDER BY m.match_date DESC, pe.match_id DESC, p.person_id
+FETCH FIRST 5 ROWS ONLY;
+```
+
+Bind variables: None.
+
+How it works: A CTE normalizes the three V003 performance tables, then conditional aggregation reports category coverage without inventing combined performance records.
+
+Expected result/change: Up to five recent player/match coverage rows. Read-only; no transaction changes.
+
+### Match-operations dashboard totals
+
+Purpose: Count active matches, tournaments, performance entries, and observations.
+
+Frontend use: `/match-official/dashboard` metrics.
+
+Source: NEW BACKEND READ.
+
+SQL:
+
+```sql
+SELECT
+  (SELECT COUNT(*) FROM match WHERE is_deleted = 0) AS match_count,
+  (SELECT COUNT(*) FROM tournament WHERE is_deleted = 0) AS tournament_count,
+  ((SELECT COUNT(*) FROM batting_performance WHERE is_deleted = 0)
+   + (SELECT COUNT(*) FROM bowling_performance WHERE is_deleted = 0)
+   + (SELECT COUNT(*) FROM fielding_performance WHERE is_deleted = 0)) AS performance_count,
+  (SELECT COUNT(*) FROM observes WHERE is_deleted = 0) AS observation_count
+FROM dual;
+```
+
+Bind variables: None.
+
+How it works: Counts only active physical records and sums the separate performance subtypes for the combined UI metric.
+
+Expected result/change: One totals row. Read-only; no transaction changes.
+
+### Recent match performance counts
+
+Purpose: Show batting, bowling, and fielding entry coverage for recent matches.
+
+Frontend use: Match Official dashboard performance-coverage table.
+
+Source: NEW BACKEND READ.
+
+SQL:
+
+```sql
+SELECT m.match_id,
+  (SELECT COUNT(*) FROM batting_performance bp WHERE bp.match_id = m.match_id AND bp.is_deleted = 0) AS batting_count,
+  (SELECT COUNT(*) FROM bowling_performance bp WHERE bp.match_id = m.match_id AND bp.is_deleted = 0) AS bowling_count,
+  (SELECT COUNT(*) FROM fielding_performance fp WHERE fp.match_id = m.match_id AND fp.is_deleted = 0) AS fielding_count
+FROM match m
+WHERE m.is_deleted = 0
+ORDER BY m.match_date DESC, m.match_id DESC
+FETCH FIRST 5 ROWS ONLY;
+```
+
+Bind variables: None.
+
+How it works: Correlated counts preserve the three V003 performance subtypes while summarizing their coverage per active match.
+
+Expected result/change: Up to five recent match rows. Read-only; no transaction changes.
+
+### Recent administrative observations
+
+Purpose: Show recent active player observations with match context.
+
+Frontend use: Match Official dashboard observation table.
+
+Source: NEW BACKEND READ using V003 `OBSERVES`.
+
+SQL:
+
+```sql
+SELECT o.match_id, p.first_name || ' ' || p.last_name AS player_name,
+       TO_CHAR(o.observation_date, 'YYYY-MM-DD') AS observation_date, o.remarks
+FROM observes o
+JOIN person p ON p.person_id = o.player_id AND p.is_deleted = 0
+JOIN match m ON m.match_id = o.match_id AND m.is_deleted = 0
+WHERE o.is_deleted = 0
+ORDER BY o.observation_date DESC, o.match_id DESC
+FETCH FIRST 5 ROWS ONLY;
+```
+
+Bind variables: None.
+
+How it works: Resolves the observed player through PERSON and excludes deleted observations, people, and matches.
+
+Expected result/change: Up to five recent observation rows. Read-only; no transaction changes.
+
+### Integrity assignment and evidence totals
+
+Purpose: Count distinct assigned investigators and active evidence items.
+
+Frontend use: `/integrity/dashboard` metrics.
+
+Source: NEW BACKEND READ.
+
+SQL:
+
+```sql
+SELECT
+  (SELECT COUNT(DISTINCT admin_id) FROM investigates WHERE is_deleted = 0) AS investigator_count,
+  (SELECT COUNT(*) FROM evidence WHERE is_deleted = 0) AS evidence_count
+FROM dual;
+```
+
+Bind variables: None.
+
+How it works: Investigator assignments remain a relationship-driven metric; no separate investigator module is introduced.
+
+Expected result/change: One totals row. Read-only; no transaction changes.
+
 ## Players
 
 ### Player registry count
