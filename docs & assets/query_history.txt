@@ -402,3 +402,18 @@ The documented active-login account lookup and successful-login timestamp update
 
 Result:
 Correct account/role combinations authenticated; a mismatched selected role returned 401; an unauthenticated protected API returned 401; an unauthorized role and cross-player request returned 403; permitted resources returned 200. Successful login timestamps were committed for the tested accounts. No secrets were logged.
+
+Reason:
+Verify the backend player create, update, structured-address, collection, audit, authorization, validation, and soft-delete workflow.
+
+Type:
+INSERT / UPDATE / SELECT / TRANSACTION VERIFICATION
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+The documented player write transaction statements in database/BACKEND_QUERY_GUIDE.md, executed through the authenticated Next.js APIs with bind variables.
+
+Result:
+A temporary verification player was created across PERSON and PLAYER, read through the detail API, updated with structured address and achievement values, read again, and soft-deleted. The create returned 201, update and delete returned 200, and the soft-deleted record subsequently returned 404. Invalid future-date input returned 400 before database execution, and a Team Performance Manager write attempt returned 403. The verification record remains only as soft-deleted history and the committed AUDIT_LOG rows record INSERT, UPDATE, and DELETE. No secrets were logged.

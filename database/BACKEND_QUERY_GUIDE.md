@@ -432,6 +432,247 @@ How it works: Active summary rows are restricted through the player's active car
 
 Expected result/change: Zero or more fielding summaries. Read-only; no transaction changes.
 
+### Allocate a player reference
+
+Purpose: Obtain the next user-facing PLAYER/PERSON reference for a registration transaction.
+
+Frontend use: `POST /api/players` from `/players/new`.
+
+Source: V003 `SEQ_PLAYER_PERSON` allocation rule.
+
+SQL:
+
+```sql
+SELECT seq_player_person.NEXTVAL AS person_id FROM dual;
+```
+
+Bind variables: None.
+
+How it works: The explicit V003 sequence keeps player references in their approved range.
+
+Expected result/change: One numeric reference. Sequence advancement is Oracle non-transactional; all table writes using it are transactional.
+
+### Create PERSON and PLAYER
+
+Purpose: Persist the supertype and player subtype for a new registration.
+
+Frontend use: `POST /api/players`.
+
+Source: NEW BACKEND WRITE using the V003 specialization model.
+
+SQL:
+
+```sql
+INSERT INTO person (
+  person_id, first_name, last_name, dob, present_address, permanent_address
+) VALUES (
+  :playerId, :firstName, :lastName, TO_DATE(:dateOfBirth, 'YYYY-MM-DD'),
+  address_type(:presentAddress, :presentUpazila, :presentDistrict, :presentDivision),
+  address_type(:permanentAddress, :permanentUpazila, :permanentDistrict, :permanentDivision)
+);
+
+INSERT INTO player (person_id, player_role, gender, family_background)
+VALUES (:playerId, :playerRole, :gender, :familyBackground);
+```
+
+Bind variables: `playerId`, validated identity/date/address values, `playerRole`, `gender`, and optional `familyBackground`.
+
+How it works: PERSON is inserted first so the PLAYER foreign key is always valid; structured addresses use the V003 Oracle object type.
+
+Expected result/change: One PERSON and one PLAYER row. Both commit with the registration transaction; any failure rolls all table writes back.
+
+### Replace player phone collection
+
+Purpose: Make the single existing form phone value the active phone collection while retaining old rows as soft-deleted history.
+
+Frontend use: Player create/update form.
+
+Source: NEW BACKEND WRITE
+
+SQL:
+
+```sql
+UPDATE person_phone SET is_deleted = 1 WHERE person_id = :playerId;
+
+MERGE INTO person_phone target
+USING (SELECT :playerId AS person_id, :phone AS phone FROM dual) source
+ON (target.person_id = source.person_id AND target.phone = source.phone)
+WHEN MATCHED THEN UPDATE SET target.is_deleted = 0
+WHEN NOT MATCHED THEN
+  INSERT (person_id, phone, is_deleted)
+  VALUES (source.person_id, source.phone, 0);
+```
+
+Bind variables: `playerId`; optional validated `phone` for the MERGE.
+
+How it works: Existing keys can be reactivated without violating the composite primary key; blank phone input leaves all phone rows inactive.
+
+Expected result/change: Prior phone rows soft-deleted and zero or one phone active. Executes inside the enclosing create/update transaction.
+
+### Replace primary education value
+
+Purpose: Update the form-managed primary education entry without discarding other structured education entries.
+
+Frontend use: Player create/update form.
+
+Source: NEW BACKEND WRITE using V003 `EDUCATION_TYPE`.
+
+SQL:
+
+```sql
+UPDATE player_education
+SET is_deleted = 1
+WHERE person_id = :playerId AND education_no = 1;
+
+MERGE INTO player_education target
+USING (SELECT :playerId AS person_id, 1 AS education_no FROM dual) source
+ON (target.person_id = source.person_id
+    AND target.education_no = source.education_no)
+WHEN MATCHED THEN UPDATE SET
+  target.education_info = education_type(
+    :education,
+    target.education_info.institute_or_board,
+    target.education_info.result,
+    target.education_info.subject
+  ),
+  target.is_deleted = 0
+WHEN NOT MATCHED THEN
+  INSERT (person_id, education_no, education_info, is_deleted)
+  VALUES (source.person_id, source.education_no,
+          education_type(:education, NULL, NULL, NULL), 0);
+```
+
+Bind variables: `playerId`; optional validated `education` for the MERGE.
+
+How it works: The current form manages `education_no = 1`; updates preserve its other object attributes and never remove additional education rows.
+
+Expected result/change: Primary education inactive or active with the supplied level. Executes inside the enclosing transaction.
+
+### Replace player achievements
+
+Purpose: Persist the newline-separated achievements entered in the existing player form.
+
+Frontend use: Player create/update form.
+
+Source: NEW BACKEND WRITE
+
+SQL:
+
+```sql
+UPDATE player_achievement
+SET is_deleted = 1
+WHERE person_id = :playerId;
+
+MERGE INTO player_achievement target
+USING (SELECT :playerId AS person_id,
+              :achievement AS achievement FROM dual) source
+ON (target.person_id = source.person_id
+    AND target.achievement = source.achievement)
+WHEN MATCHED THEN UPDATE SET target.is_deleted = 0
+WHEN NOT MATCHED THEN
+  INSERT (person_id, achievement, is_deleted)
+  VALUES (source.person_id, source.achievement, 0);
+```
+
+Bind variables: `playerId`; one validated `achievement` per deduplicated entry for each MERGE.
+
+How it works: Existing values are reactivated by composite key and removed form values remain soft-deleted.
+
+Expected result/change: The submitted set becomes active. All statements execute in one create/update transaction.
+
+### Update PERSON and PLAYER
+
+Purpose: Persist edits to an active player while preserving the V003 supertype/subtype split.
+
+Frontend use: `PUT /api/players/[playerId]` from `/players/[playerId]/edit`.
+
+Source: NEW BACKEND WRITE
+
+SQL:
+
+```sql
+UPDATE person
+SET first_name = :firstName,
+    last_name = :lastName,
+    dob = TO_DATE(:dateOfBirth, 'YYYY-MM-DD'),
+    present_address = address_type(
+      :presentAddress, :presentUpazila, :presentDistrict, :presentDivision
+    ),
+    permanent_address = address_type(
+      :permanentAddress, :permanentUpazila,
+      :permanentDistrict, :permanentDivision
+    )
+WHERE person_id = :playerId AND is_deleted = 0;
+
+UPDATE player
+SET player_role = :playerRole,
+    gender = :gender,
+    family_background = :familyBackground
+WHERE person_id = :playerId AND is_deleted = 0;
+```
+
+Bind variables: `playerId` and the same validated player fields documented for creation.
+
+How it works: Exactly one active PERSON and PLAYER must be updated before collection replacement proceeds.
+
+Expected result/change: One PERSON and one PLAYER updated. All detail/collection/audit statements commit together or roll back together.
+
+### Soft-delete a player
+
+Purpose: Remove a player from active application views without hard-deleting historical records.
+
+Frontend use: `DELETE /api/players/[playerId]` from the existing edit workflow.
+
+Source: NEW BACKEND WRITE following V003 soft-delete behavior.
+
+SQL:
+
+```sql
+UPDATE player SET is_deleted = 1
+WHERE person_id = :playerId AND is_deleted = 0;
+
+UPDATE person SET is_deleted = 1
+WHERE person_id = :playerId AND is_deleted = 0;
+
+UPDATE person_phone SET is_deleted = 1 WHERE person_id = :playerId;
+UPDATE player_education SET is_deleted = 1 WHERE person_id = :playerId;
+UPDATE player_achievement SET is_deleted = 1 WHERE person_id = :playerId;
+
+UPDATE user_account
+SET account_status = 'DISABLED', is_deleted = 1
+WHERE person_id = :playerId AND is_deleted = 0;
+```
+
+Bind variables: `playerId`.
+
+How it works: Core identity, form-managed child values, and any login are deactivated; team, career, match, and integrity history remains intact.
+
+Expected result/change: One active player/person deactivated plus related active profile/account rows. All statements and the audit row commit together or roll back together.
+
+### Player write audit row
+
+Purpose: Record the actor and operation for each successful player create, update, or soft delete.
+
+Frontend use: Every player write transaction.
+
+Source: NEW BACKEND WRITE using V003 `AUDIT_LOG`.
+
+SQL:
+
+```sql
+INSERT INTO audit_log (
+  actor_person_id, entity_name, record_identifier, operation, new_values
+) VALUES (
+  :actorPersonId, 'PLAYER', :recordIdentifier, :operation, :newValues
+);
+```
+
+Bind variables: Authenticated `actorPersonId`, player `recordIdentifier`, fixed-whitelist `operation`, and server-generated JSON `newValues` containing non-secret changed-field context.
+
+How it works: Audit attribution comes from the signed server session, never client input.
+
+Expected result/change: One audit row per successful write. It commits or rolls back with its player transaction.
+
 ## Teams
 
 ### Team registry count

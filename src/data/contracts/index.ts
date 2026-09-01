@@ -1,5 +1,12 @@
 import type { DataState } from "@/types/data-state";
 
+export type AddressRecord = {
+  addressLine?: string;
+  upazilaOrThana?: string;
+  district?: string;
+  division?: string;
+};
+
 export type PersonRecord = {
   personId: string;
   firstName: string;
@@ -7,6 +14,8 @@ export type PersonRecord = {
   dateOfBirth: string;
   presentAddress?: string;
   permanentAddress?: string;
+  presentAddressDetails?: AddressRecord;
+  permanentAddressDetails?: AddressRecord;
   phones: readonly string[];
 };
 

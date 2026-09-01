@@ -269,6 +269,8 @@ export async function findPlayerById(connection: Connection, playerId: number): 
       dateOfBirth: base.DOB,
       presentAddress: formatAddress([base.PRESENT_ADDRESS_LINE, base.PRESENT_UPAZILA, base.PRESENT_DISTRICT, base.PRESENT_DIVISION]),
       permanentAddress: formatAddress([base.PERMANENT_ADDRESS_LINE, base.PERMANENT_UPAZILA, base.PERMANENT_DISTRICT, base.PERMANENT_DIVISION]),
+      presentAddressDetails: { addressLine: base.PRESENT_ADDRESS_LINE ?? undefined, upazilaOrThana: base.PRESENT_UPAZILA ?? undefined, district: base.PRESENT_DISTRICT ?? undefined, division: base.PRESENT_DIVISION ?? undefined },
+      permanentAddressDetails: { addressLine: base.PERMANENT_ADDRESS_LINE ?? undefined, upazilaOrThana: base.PERMANENT_UPAZILA ?? undefined, district: base.PERMANENT_DISTRICT ?? undefined, division: base.PERMANENT_DIVISION ?? undefined },
       phones: phoneRows.map((row) => row.VALUE),
     },
     education: educationRows.length > 0 ? educationRows.map(formatEducation).join("; ") : undefined,
