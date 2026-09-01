@@ -1,91 +1,109 @@
 # PitchSync
 
-PitchSync is a Bangladesh cricket administration, performance, competition, and integrity-management platform created as an academic DBMS project. This repository contains the completed frontend, a prepared Express backend boundary, and Oracle database project files.
+PitchSync is a Bangladesh cricket administration, performance, competition, and integrity-management platform built as an academic DBMS project. The application uses Next.js App Router route handlers, the official `oracledb` driver, and raw bind-variable SQL against Oracle Database 19c.
 
-The frontend is a Next.js App Router application with 25 product routes, responsive role-based navigation, guarded dashboards, schema-aligned entity views, validated player forms, and typed data contracts. It does not fabricate business records and is intentionally disconnected from the backend during this frontend phase.
+## Local requirements
 
-## Run the frontend
+- A current Node.js LTS release and npm
+- The deployed V003 schema in `PITCHSYNC_OWNER`
+- Oracle 19c available at `localhost:1522/PITCHPDB`
 
-Requirements: a current Node.js LTS release and npm.
+The separate Oracle XE service on port 1521 is not a PitchSync target and must remain untouched.
+
+## Run locally
+
+Install dependencies:
 
 ```bash
 npm install
+```
+
+Create the ignored `.env.oracle-local` file in the project root with the existing schema-owner password:
+
+```text
+DB_PASSWORD=your-existing-PITCHSYNC_OWNER-password
+```
+
+Generate the ignored Next.js server environment file. This copies the password without printing it, fixes the approved Oracle target, and creates a random session secret:
+
+```bash
+npm run env:setup
+```
+
+For the local V003 seed accounts, activate their password hashes and refresh the ignored `DEMO_CREDENTIALS.txt` sign-in reference:
+
+```bash
+npm run auth:activate-local
+```
+
+Start the application:
+
+```bash
 npm run dev
 ```
 
-Open `http://localhost:3000`. No frontend environment variables are required.
+Open `http://localhost:3000/sign-in` and use a matching username, password, and role from `DEMO_CREDENTIALS.txt`. Never commit either credentials file or any `.env` file.
 
-For a production run:
+## Production-style verification
 
 ```bash
+npm run lint
+npm run typecheck
 npm run build
 npm run start
 ```
 
-## Sign in
+Production deployments must supply `ORACLE_USER`, `ORACLE_PASSWORD`, `ORACLE_CONNECT_STRING`, and a strong `AUTH_SECRET` through server-side secret management. None of these values may use a `NEXT_PUBLIC_` prefix.
 
-The temporary client-side sign-in accepts any valid-looking email address, any non-empty password, and one selected role. The password is validated in the browser but is never stored. Available roles are:
+## Integrated application areas
 
-- Super Administrator
-- Cricket Board Administrator
-- Team Performance Manager
-- Match Official
-- Integrity & Compliance Officer
-- Player
+- Database-backed authentication with an HttpOnly signed session cookie
+- Server-side route and API authorization for all six approved roles
+- Role-specific Oracle-backed dashboards
+- Player registry, search, filters, pagination, profile, registration, update, and soft delete
+- Team registry, filters, pagination, detail, roster, and match associations
+- Tournament registry, filters, pagination, detail, teams, sponsors, and matches
+- Match registry, filters, pagination, detail, performance scorecards, and observations
+- Player career and performance registry, filters, pagination, and detail
+- Complaint, integrity-case, and rulebook registries with search, filters, pagination, and details
 
-The selected role is held in `sessionStorage` for the current browser session. Role selection exists only on the sign-in form, every role is routed directly to its own dashboard, cross-role routes are guarded, and signing out clears the session.
+Browser code never connects directly to Oracle. All business data passes through authenticated Next.js server APIs, and every user-controlled SQL value is sent as an Oracle bind variable.
 
-## Frontend routes
+## Key routes
 
 | Area | Routes |
 | --- | --- |
-| Authentication | `/sign-in` |
+| Authentication | `/sign-in`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/session` |
+| Health | `/api/health/database` |
 | Dashboards | `/super-admin/dashboard`, `/board-admin/dashboard`, `/performance/dashboard`, `/match-official/dashboard`, `/integrity/dashboard`, `/player/dashboard` |
 | Players | `/players`, `/players/new`, `/players/[playerId]`, `/players/[playerId]/edit` |
 | Teams | `/teams`, `/teams/[teamId]` |
 | Tournaments | `/tournaments`, `/tournaments/[tournamentId]` |
 | Matches | `/matches`, `/matches/[matchId]` |
 | Performance | `/performance/players`, `/performance/players/[playerId]` |
-| Complaints | `/integrity/complaints`, `/integrity/complaints/[complaintId]` |
-| Cases | `/integrity/cases`, `/integrity/cases/[caseId]` |
-| Rulebook | `/integrity/rulebook`, `/integrity/rulebook/[ruleId]` |
+| Integrity | `/integrity/complaints`, `/integrity/cases`, `/integrity/rulebook` and their detail routes |
 
-Dynamic routes render a valid empty detail view when no backend record is available. Deferred sidebar entries are visibly disabled and have no link or navigation behavior.
+## Database and query documentation
 
-## Data model and boundaries
+- `database/migrations/V003_create_final_schema.sql` is the authoritative physical schema.
+- `database/BACKEND_QUERY_GUIDE.md` documents every backend query, bind, frontend mapping, and transaction behavior.
+- `docs & assets/query_history.txt` records actual Oracle deployment and execution history without secrets.
+- `database/README.md` documents the V003 deployment and verification process.
 
-Frontend scope follows the final ER and relational schema. Relational concepts such as team membership, tournament participation, assigned investigators, persons involved, violated rules, evidence links, and complaint sources are presented within meaningful entity pages rather than as standalone junction-table screens.
-
-Typed data contracts are defined in `src/data/contracts`. The current adapter in `src/data/adapters/unavailable` returns no fabricated records and exposes loading, empty, error, and unavailable states. Backend integration can replace that adapter without moving request logic into presentation components.
-
-The frontend does not connect directly to Oracle, expose database credentials, or claim to persist form submissions. Real authentication, backend persistence, reports, notifications, document upload/storage, and other disabled future modules remain backend or later-phase work.
-
-## Quality checks
-
-```bash
-npm run lint
-npm run typecheck
-npm run build
-```
-
-The release audit also covers all implemented routes, all six sign-in flows, sign-out, cross-role redirects, disabled navigation, form validation, responsive layouts, and prohibited dummy/development wording in the interface.
+Normal backend development must not rerun V003's destructive reset logic. Use V003 soft-delete behavior for historical records and keep all credentials, wallets, dumps, and private keys outside Git.
 
 ## Repository structure
 
 ```text
 PitchSync/
-|-- src/                         # Next.js frontend
-|-- backend/                     # Prepared Express backend boundary
-|-- database/                    # Oracle migrations and supporting SQL
-|-- docs/                        # Project proposal and documentation
-|-- ER_Final.drawio.html         # Authoritative conceptual model
-|-- Schema_Updated.png           # Authoritative relational schema
-|-- PROJECT_SCOPE.md             # Frontend scope snapshot
-|-- FRONTEND_COMPLETION.md       # Completion and verification handoff
+|-- src/app/                     # Next.js pages and server API routes
+|-- src/features/                # Role and domain UI
+|-- src/lib/db/                  # Server-only Oracle pool and query modules
+|-- database/                    # V003 schema, SQL catalogue, tests, and guide
+|-- docs & assets/               # ER/schema references and execution history
+|-- scripts/                     # Local environment/account setup helpers
 `-- package.json
 ```
-
-Database changes are outside the frontend task. Keep backend secrets only in ignored backend environment files, and never commit passwords, private keys, infrastructure addresses, or privileged Oracle credentials.
 
 ## License
 
