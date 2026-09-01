@@ -14,6 +14,7 @@ export type TeamSummary = {
   teamId: string;
   teamName: string;
   category: string;
+  franchiseOwner?: string;
 };
 
 export type PlayerSummary = {
@@ -21,6 +22,23 @@ export type PlayerSummary = {
   fullName: string;
   playerRole: string;
   gender: "MALE" | "FEMALE";
+};
+
+export type PlayerListItem = PlayerSummary & {
+  phone?: string;
+  teamAssociationCount: number;
+};
+
+export type SelectOption = {
+  value: string;
+  label: string;
+};
+
+export type PaginationMetadata = {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
 };
 
 export type BattingSummary = {

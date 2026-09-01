@@ -4,12 +4,16 @@ export function EntityHeader({
   eyebrow,
   title,
   referenceLabel,
+  reference,
+  loaded = false,
   actions,
   children,
 }: {
   eyebrow: string;
   title: string;
   referenceLabel: string;
+  reference?: React.ReactNode;
+  loaded?: boolean;
   actions?: React.ReactNode;
   children?: React.ReactNode;
 }) {
@@ -19,10 +23,10 @@ export function EntityHeader({
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--primary)]">{eyebrow}</p>
           <h1 className="heading-font mt-2 text-3xl font-semibold">{title}</h1>
-          <p className="mt-2 text-sm text-[var(--text-muted)]">{referenceLabel}: <strong className="text-[var(--text)]">—</strong></p>
+          <p className="mt-2 text-sm text-[var(--text-muted)]">{referenceLabel}: <strong className="text-[var(--text)]">{reference ?? "—"}</strong></p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="unavailable">No record loaded</Badge>
+          <Badge variant={loaded ? "default" : "unavailable"}>{loaded ? "Record loaded" : "No record loaded"}</Badge>
           {actions}
         </div>
       </div>
