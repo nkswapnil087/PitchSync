@@ -465,3 +465,22 @@ VALUES (200001, 'USER_ACCOUNT', :recordIdentifier, 'UPDATE', :oldValues, :newVal
 
 Result:
 Renamed the active accounts to superadmin, boardadmin, performancemanager, matchofficial, integrity1, integrity2, player1, and player2 on PITCHSYNC_OWNER in PITCHPDB. All eight password hashes were verified unchanged, all eight new username/role combinations authenticated successfully with the existing password, and the old super.admin username returned 401. No secrets were logged.
+
+Reason:
+Update the eight local PitchSync application account password hashes to the user-requested per-account local credential pattern.
+
+Type:
+UPDATE / AUTHENTICATION VERIFICATION
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+UPDATE user_account
+SET password_hash = :passwordHash,
+    account_status = 'ACTIVE',
+    is_deleted = 0
+WHERE username = :username;
+
+Result:
+Updated the password hashes for superadmin, boardadmin, performancemanager, matchofficial, integrity1, integrity2, player1, and player2 on PITCHSYNC_OWNER in PITCHPDB. All eight username/role combinations authenticated successfully through /api/auth/login, and a negative login using the superadmin username without the required local password prefix returned 401. Exact password values and hashes were not logged.
