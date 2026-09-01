@@ -360,7 +360,177 @@ Expected result/change: Zero or more fielding summaries. Read-only; no transacti
 
 ## Teams
 
-Queries will be added with the team integration checkpoint.
+### Team registry count
+
+Purpose: Count active teams after search and ownership filtering.
+
+Frontend use: Team registry pagination.
+
+Source: NEW BACKEND QUERY
+
+SQL:
+
+```sql
+SELECT COUNT(*) AS total_items
+FROM team t
+WHERE t.is_deleted = 0
+  -- Optional bound name/id/category search
+  -- Optional franchise_owner IS NULL / IS NOT NULL ownership condition
+```
+
+Bind variables: Optional `search`; ownership is a validated choice that selects a fixed null/not-null clause.
+
+How it works: Only active teams matching the server-defined optional clauses are counted.
+
+Expected result/change: One count row. Read-only; no transaction changes.
+
+### Paginated team registry
+
+Purpose: Return active teams with current-roster and recorded-match counts.
+
+Frontend use: `/teams` table, search, ownership filter, sort, and pagination.
+
+Source: NEW BACKEND QUERY
+
+SQL:
+
+```sql
+SELECT t.team_id, t.team_name, t.category, t.franchise_owner,
+       (SELECT COUNT(DISTINCT pf.person_id)
+          FROM plays_for pf
+         WHERE pf.team_id = t.team_id
+           AND pf.end_date IS NULL
+           AND pf.is_deleted = 0) AS roster_count,
+       (SELECT COUNT(DISTINCT i.match_id)
+          FROM includes i
+          JOIN match m ON m.match_id = i.match_id AND m.is_deleted = 0
+         WHERE i.team_id = t.team_id AND i.is_deleted = 0) AS match_count
+FROM team t
+WHERE t.is_deleted = 0
+  -- Optional documented search/ownership clauses
+ORDER BY /* one server-whitelisted expression: name, id, or category */
+OFFSET :rowOffset ROWS FETCH NEXT :rowLimit ROWS ONLY;
+```
+
+Bind variables: Optional `search`; required `rowOffset` and `rowLimit`.
+
+How it works: Oracle calculates relationship counts and performs filtering, fixed-whitelist sorting, and pagination before returning rows.
+
+Expected result/change: Zero or more team list rows. Read-only; no transaction changes.
+
+### Team detail heading
+
+Purpose: Load one active team and its roster/match counts.
+
+Frontend use: `/teams/[teamId]` header and overview.
+
+Source: NEW BACKEND QUERY
+
+SQL:
+
+```sql
+SELECT t.team_id, t.team_name, t.category, t.franchise_owner,
+       (SELECT COUNT(DISTINCT pf.person_id)
+          FROM plays_for pf
+         WHERE pf.team_id = t.team_id AND pf.end_date IS NULL AND pf.is_deleted = 0) AS roster_count,
+       (SELECT COUNT(DISTINCT i.match_id)
+          FROM includes i
+          JOIN match m ON m.match_id = i.match_id AND m.is_deleted = 0
+         WHERE i.team_id = t.team_id AND i.is_deleted = 0) AS match_count
+FROM team t
+WHERE t.team_id = :teamId AND t.is_deleted = 0;
+```
+
+Bind variables: `teamId`.
+
+How it works: The team is selected by its validated numeric reference and relation counts are computed from active junction rows.
+
+Expected result/change: One active team or no row. Read-only; no transaction changes.
+
+### Current team roster
+
+Purpose: Load the active players currently associated with one team.
+
+Frontend use: Team detail Roster tab.
+
+Source: Adapted from V003 catalogue query `P06_current_team_roster.sql`; the API projects the identity, role, and gender columns required by this page.
+
+SQL:
+
+```sql
+SELECT p.person_id, p.first_name || ' ' || p.last_name AS full_name,
+       pl.player_role, pl.gender
+FROM plays_for pf
+JOIN player pl ON pl.person_id = pf.person_id AND pl.is_deleted = 0
+JOIN person p ON p.person_id = pl.person_id AND p.is_deleted = 0
+WHERE pf.team_id = :teamId
+  AND pf.end_date IS NULL
+  AND pf.is_deleted = 0
+ORDER BY pl.player_role, p.last_name, p.first_name, p.person_id;
+```
+
+Bind variables: `teamId`.
+
+How it works: `PLAYS_FOR` supplies the player-team relationship; an open-ended active association identifies the current roster.
+
+Expected result/change: Zero or more roster rows. Read-only; no transaction changes.
+
+### Team competition matches
+
+Purpose: Load active matches and tournaments in which one team participates.
+
+Frontend use: Team detail Competition Matches tab.
+
+Source: NEW BACKEND QUERY
+
+SQL:
+
+```sql
+SELECT m.match_id, tr.tournament_id, tr.tournament_name,
+       TO_CHAR(m.match_date, 'YYYY-MM-DD') AS match_date, m.venue
+FROM includes selected_team
+JOIN match m ON m.match_id = selected_team.match_id AND m.is_deleted = 0
+JOIN tournament tr ON tr.tournament_id = m.tournament_id AND tr.is_deleted = 0
+WHERE selected_team.team_id = :teamId AND selected_team.is_deleted = 0
+ORDER BY m.match_date DESC, m.match_id DESC;
+```
+
+Bind variables: `teamId`.
+
+How it works: `INCLUDES` identifies the matches containing the requested team, then joins each active tournament edition.
+
+Expected result/change: Zero or more match rows. Read-only; no transaction changes.
+
+### Participating teams for team matches
+
+Purpose: Load every active participant for the selected team's matches so the UI can identify opponents.
+
+Frontend use: Opponent column in the Team detail Competition Matches tab.
+
+Source: NEW BACKEND QUERY
+
+SQL:
+
+```sql
+SELECT i.match_id, t.team_id, t.team_name, t.category, t.franchise_owner
+FROM includes i
+JOIN team t ON t.team_id = i.team_id AND t.is_deleted = 0
+WHERE i.is_deleted = 0
+  AND EXISTS (
+    SELECT 1
+    FROM includes selected_team
+    WHERE selected_team.match_id = i.match_id
+      AND selected_team.team_id = :teamId
+      AND selected_team.is_deleted = 0
+  )
+ORDER BY i.match_id, t.team_name, t.team_id;
+```
+
+Bind variables: `teamId`.
+
+How it works: The correlated existence test restricts participants to matches linked to the requested team; the server groups rows by match ID.
+
+Expected result/change: Zero or more match-participant rows. Read-only; no transaction changes.
 
 ## Tournaments
 

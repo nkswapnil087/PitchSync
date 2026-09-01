@@ -107,6 +107,11 @@ export type TeamRecord = TeamSummary & {
   matches: readonly MatchSummary[];
 };
 
+export type TeamListItem = TeamSummary & {
+  rosterCount: number;
+  matchCount: number;
+};
+
 export type TournamentRecord = {
   tournamentId: string;
   tournamentName: string;
