@@ -1381,7 +1381,89 @@ Expected result/change: Zero or more evidence rows. Read-only; no transaction ch
 
 ## Rulebook
 
-Queries will be added with the integrity integration checkpoint.
+### Rulebook registry count
+
+Purpose: Count active rules after reference/clause/category search and category filtering.
+
+Frontend use: Rulebook registry pagination.
+
+Source: NEW BACKEND QUERY
+
+SQL:
+
+```sql
+SELECT COUNT(*) AS total_items
+FROM rulebook r
+WHERE r.is_deleted = 0
+  -- Optional bound rule ID/clause/category search
+  -- Optional bound category contains filter
+```
+
+Bind variables: Optional `search` and `category`.
+
+How it works: Only active finalized rulebook records matching validated filters are counted.
+
+Expected result/change: One count row. Read-only; no transaction changes.
+
+### Paginated rulebook registry
+
+Purpose: Return active rules and their active linked-case counts.
+
+Frontend use: `/integrity/rulebook` table, filters, sort, and pagination.
+
+Source: Reverse-direction companion to V003 catalogue query `Q04_rules_for_case.sql`.
+
+SQL:
+
+```sql
+SELECT r.rule_id, r.clause_no, r.category,
+       (SELECT COUNT(*)
+          FROM violates v
+          JOIN case_record c ON c.case_id = v.case_id AND c.is_deleted = 0
+         WHERE v.rule_id = r.rule_id AND v.is_deleted = 0) AS linked_case_count
+FROM rulebook r
+WHERE r.is_deleted = 0
+  -- Optional documented filters
+ORDER BY /* one server-whitelisted expression: clause, id, or category */
+OFFSET :rowOffset ROWS FETCH NEXT :rowLimit ROWS ONLY;
+```
+
+Bind variables: Optional registry-filter binds; required `rowOffset` and `rowLimit`.
+
+How it works: The `VIOLATES` junction supplies case coverage without exposing a standalone junction-table module.
+
+Expected result/change: Zero or more rule rows. Read-only; no transaction changes.
+
+### Rulebook detail with linked cases
+
+Purpose: Load one active rule and every active case linked through a violation.
+
+Frontend use: `/integrity/rulebook/[ruleId]` heading and Linked Case Violations section.
+
+Source: Reverse-direction detail of V003 catalogue query `Q04_rules_for_case.sql`.
+
+SQL:
+
+```sql
+SELECT r.rule_id, r.clause_no, r.category, c.case_id, c.status,
+       TO_CHAR(c.date_opened, 'YYYY-MM-DD') AS date_opened,
+       c.referral_status,
+       CASE WHEN c.case_id IS NULL THEN 0 ELSE
+         (SELECT COUNT(*) FROM involves_in ii
+           WHERE ii.case_id = c.case_id AND ii.is_deleted = 0)
+       END AS involved_player_count
+FROM rulebook r
+LEFT JOIN violates v ON v.rule_id = r.rule_id AND v.is_deleted = 0
+LEFT JOIN case_record c ON c.case_id = v.case_id AND c.is_deleted = 0
+WHERE r.rule_id = :ruleId AND r.is_deleted = 0
+ORDER BY c.date_opened DESC, c.case_id DESC;
+```
+
+Bind variables: `ruleId`.
+
+How it works: Left joins retain an unlinked rule; the server groups repeated rule columns into one response with linked cases.
+
+Expected result/change: One or more rows for an active rule, or no rows. Read-only; no transaction changes.
 
 ## Administration / Audit
 

@@ -248,6 +248,15 @@ export type RulebookRecord = {
   clauseNumber: string;
   category: string;
   caseIds: readonly string[];
+  linkedCases?: readonly RuleCaseSummary[];
+};
+
+export type RuleCaseSummary = ComplaintCaseSummary & {
+  involvedPlayerCount: number;
+};
+
+export type RulebookListItem = Omit<RulebookRecord, "caseIds" | "linkedCases"> & {
+  linkedCaseCount: number;
 };
 
 export type EvidenceRecord = {
