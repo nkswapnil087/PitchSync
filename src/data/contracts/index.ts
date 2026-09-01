@@ -262,14 +262,37 @@ export type InvestigationAssignment = {
   investigatorIds: readonly string[];
 };
 
+export type IntegrityInvestigator = {
+  administratorId: string;
+  fullName: string;
+  designation: string;
+  department: string;
+  assignedPlayerIds: readonly string[];
+};
+
 export type IntegrityCaseRecord = {
   caseId: string;
   status: string;
   dateOpened: string;
+  referralStatus?: string;
+  referredToAuthority?: string;
   complaints: readonly ComplaintRecord[];
   involvedPlayers: readonly InvestigationAssignment[];
   rules: readonly RulebookRecord[];
   evidence: readonly EvidenceRecord[];
+  investigators?: readonly IntegrityInvestigator[];
+};
+
+export type IntegrityCaseListItem = {
+  caseId: string;
+  status: string;
+  dateOpened: string;
+  referralStatus?: string;
+  involvedPlayerCount: number;
+  investigatorCount: number;
+  complaintCount: number;
+  ruleCount: number;
+  evidenceCount: number;
 };
 
 export interface ReadRepository<T> {

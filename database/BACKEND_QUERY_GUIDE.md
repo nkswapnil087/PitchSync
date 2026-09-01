@@ -1184,6 +1184,201 @@ How it works: Left joins retain a complaint that has no case yet; the server gro
 
 Expected result/change: One or more rows for an active complaint, or no rows. Read-only; no transaction changes.
 
+### Integrity case registry count
+
+Purpose: Count active cases after reference/authority/type search, status, and opened-date filters.
+
+Frontend use: Integrity case registry pagination.
+
+Source: Count companion to V003 catalogue queries `Q01_unresolved_cases.sql` and `Q10_full_case_dossier.sql`.
+
+SQL:
+
+```sql
+SELECT COUNT(*) AS total_items
+FROM case_record c
+WHERE c.is_deleted = 0
+  -- Optional bound case ID/authority/involvement-type search
+  -- Optional bound status and exact opened-date filters
+```
+
+Bind variables: Optional `search`, `caseStatus`, and `openedDate`.
+
+How it works: Validated filters are applied to all active cases, not only unresolved cases, because the registry also presents closed history.
+
+Expected result/change: One count row. Read-only; no transaction changes.
+
+### Paginated integrity case registry
+
+Purpose: Return active cases with counts for each meaningful dossier relationship.
+
+Frontend use: `/integrity/cases` table, filters, sort, and pagination.
+
+Source: Paginated registry form of V003 catalogue query `Q10_full_case_dossier.sql`.
+
+SQL:
+
+```sql
+SELECT c.case_id, c.status,
+       TO_CHAR(c.date_opened, 'YYYY-MM-DD') AS date_opened,
+       c.referral_status,
+       (SELECT COUNT(*) FROM source_of s
+         WHERE s.case_id = c.case_id AND s.is_deleted = 0) AS complaint_count,
+       (SELECT COUNT(*) FROM involves_in ii
+         WHERE ii.case_id = c.case_id AND ii.is_deleted = 0) AS involved_player_count,
+       (SELECT COUNT(DISTINCT i.admin_id) FROM investigates i
+         WHERE i.case_id = c.case_id AND i.is_deleted = 0) AS investigator_count,
+       (SELECT COUNT(*) FROM violates v
+         WHERE v.case_id = c.case_id AND v.is_deleted = 0) AS rule_count,
+       (SELECT COUNT(*) FROM evidence e
+         WHERE e.case_id = c.case_id AND e.is_deleted = 0) AS evidence_count
+FROM case_record c
+WHERE c.is_deleted = 0
+  -- Optional documented filters
+ORDER BY /* one server-whitelisted expression: opened, id, or status */
+OFFSET :rowOffset ROWS FETCH NEXT :rowLimit ROWS ONLY;
+```
+
+Bind variables: Optional registry-filter binds; required `rowOffset` and `rowLimit`.
+
+How it works: Correlated counts consolidate junction relations inside the case registry rather than exposing junction tables as separate modules.
+
+Expected result/change: Zero or more case rows. Read-only; no transaction changes.
+
+### Integrity case dossier heading
+
+Purpose: Load one active case, referral data, and relationship counts.
+
+Frontend use: `/integrity/cases/[caseId]` header and overview.
+
+Source: V003 catalogue query `Q10_full_case_dossier.sql`, with distinct investigator count and formatted date.
+
+SQL:
+
+```sql
+SELECT c.case_id, c.status, c.involvement_type,
+       TO_CHAR(c.date_opened, 'YYYY-MM-DD') AS date_opened,
+       c.referral_status, c.referred_to_authority,
+       /* complaint, involved-player, distinct-investigator, rule, evidence counts */
+FROM case_record c
+WHERE c.case_id = :caseId AND c.is_deleted = 0;
+```
+
+Bind variables: `caseId`.
+
+How it works: The case heading is selected once and the response presents physical involvement information on each player-case UI relationship.
+
+Expected result/change: One active case or no row. Read-only; no transaction changes.
+
+### Case involved players and investigation team
+
+Purpose: Load involved players and their assigned investigators for one case.
+
+Frontend use: Involved Players and Investigation Team tabs.
+
+Source: Extends V003 catalogue query `Q03_players_in_case.sql` with investigator identity and administration fields.
+
+SQL:
+
+```sql
+SELECT p.person_id AS player_id,
+       p.first_name || ' ' || p.last_name AS full_name,
+       pl.player_role, pl.gender, c.involvement_type,
+       inv.admin_id AS investigator_id,
+       ap.first_name || ' ' || ap.last_name AS investigator_name,
+       a.designation, a.department
+FROM involves_in ii
+JOIN case_record c ON c.case_id = ii.case_id AND c.is_deleted = 0
+JOIN player pl ON pl.person_id = ii.person_id AND pl.is_deleted = 0
+JOIN person p ON p.person_id = pl.person_id AND p.is_deleted = 0
+LEFT JOIN investigates inv
+       ON inv.person_id = ii.person_id AND inv.case_id = ii.case_id AND inv.is_deleted = 0
+LEFT JOIN admin a ON a.person_id = inv.admin_id AND a.is_deleted = 0
+LEFT JOIN person ap ON ap.person_id = a.person_id AND ap.is_deleted = 0
+WHERE ii.case_id = :caseId AND ii.is_deleted = 0
+ORDER BY p.last_name, p.first_name, p.person_id;
+```
+
+Bind variables: `caseId`.
+
+How it works: `INVOLVES_IN` remains the player-case relationship and `INVESTIGATES` supplies its assignment; the server groups rows into player assignments and a unified investigation team.
+
+Expected result/change: Zero or more involvement/assignment rows. Read-only; no transaction changes.
+
+### Case complaint sources
+
+Purpose: Load complaints linked as sources of one case.
+
+Frontend use: Integrity case Complaint Sources tab.
+
+Source: Reverse-direction detail of V003 `Q12_complaint_details_with_case.sql`.
+
+SQL:
+
+```sql
+SELECT c.complaint_id, c.source_type,
+       TO_CHAR(c.date_received, 'YYYY-MM-DD') AS date_received,
+       c.description, c.misconduct_type
+FROM source_of s
+JOIN complaint c ON c.complaint_id = s.complaint_id AND c.is_deleted = 0
+WHERE s.case_id = :caseId AND s.is_deleted = 0
+ORDER BY c.date_received, c.complaint_id;
+```
+
+Bind variables: `caseId`.
+
+How it works: Only the finalized `COMPLAINT`/`SOURCE_OF` case-source model is used.
+
+Expected result/change: Zero or more complaint rows. Read-only; no transaction changes.
+
+### Rules linked to a case
+
+Purpose: Load all active rules allegedly violated in one case.
+
+Frontend use: Integrity case Rules & Violations tab.
+
+Source: V003 catalogue query `Q04_rules_for_case.sql`.
+
+SQL:
+
+```sql
+SELECT r.rule_id, r.category, r.clause_no
+FROM violates v
+JOIN rulebook r ON r.rule_id = v.rule_id
+WHERE v.case_id = :caseId AND v.is_deleted = 0 AND r.is_deleted = 0
+ORDER BY r.category, r.clause_no;
+```
+
+Bind variables: `caseId`.
+
+How it works: The active `VIOLATES` junction powers the embedded case rules section.
+
+Expected result/change: Zero or more rule rows. Read-only; no transaction changes.
+
+### Evidence for a case
+
+Purpose: Load active evidence belonging to one case.
+
+Frontend use: Integrity case Evidence tab.
+
+Source: V003 catalogue query `Q05_evidence_for_case.sql`.
+
+SQL:
+
+```sql
+SELECT evidence_no, description,
+       TO_CHAR(collected_date, 'YYYY-MM-DD') AS collected_date
+FROM evidence
+WHERE case_id = :caseId AND is_deleted = 0
+ORDER BY evidence_no;
+```
+
+Bind variables: `caseId`.
+
+How it works: Evidence is identified within its owning case by the composite case/evidence key.
+
+Expected result/change: Zero or more evidence rows. Read-only; no transaction changes.
+
 ## Rulebook
 
 Queries will be added with the integrity integration checkpoint.
