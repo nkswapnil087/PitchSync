@@ -7,19 +7,19 @@ import { SearchField } from "@/components/forms/search-field";
 import { PageHeader } from "@/components/page/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type { ComplaintListItem } from "@/data/contracts";
 import { RegistryTable } from "@/features/shared/registry-table";
 import { useRegistryFilters } from "@/features/shared/use-registry-filters";
 import { ConfidentialityNotice } from "./confidentiality-notice";
 
-const columns = ["Complaint ID", "Date received", "Source type", "Description", "Linked cases", "Actions"] as const;
+const columns = ["Complaint ID", "Date received", "Source type", "Misconduct type", "Description", "Linked cases", "Actions"] as const;
 
 export function ComplaintRegistry() {
-  const { searchParams, setFilter, state } = useRegistryFilters("No complaint records found.");
-
+  const { searchParams, setFilter, setPage, state, pagination } = useRegistryFilters<ComplaintListItem>("No complaint records found.", "/api/integrity/complaints");
   return (
     <>
       <ConfidentialityNotice />
-      <PageHeader eyebrow="Integrity domain" title="Complaint registry" description="Search and review complaint sources and their linked integrity cases." actions={<Button asChild variant="outline"><Link href="/integrity/complaints/record">Open complaint details</Link></Button>} />
+      <PageHeader eyebrow="Integrity domain" title="Complaint registry" description="Search and review complaint sources and their linked integrity cases." />
       <FilterBar>
         <SearchField value={searchParams.get("q") ?? ""} onChange={(value) => setFilter("q", value)} placeholder="Search complaint registry" />
         <Input className="sm:w-48" aria-label="Filter by source type" placeholder="Filter by source type" value={searchParams.get("source") ?? ""} onChange={(event) => setFilter("source", event.target.value)} />
@@ -30,7 +30,15 @@ export function ComplaintRegistry() {
           <Input className="w-32 border-0 p-0 shadow-none focus:ring-0" type="date" value={searchParams.get("to") ?? ""} onChange={(event) => setFilter("to", event.target.value)} aria-label="Received to date" />
         </div>
       </FilterBar>
-      <RegistryTable columns={columns} state={state} emptyTitle="No complaints found" emptyDescription="No complaint records match the current filters." />
+      <RegistryTable columns={columns} state={state} emptyTitle="No complaints found" emptyDescription="No complaint records match the current filters." pagination={pagination} onPageChange={setPage} renderRow={(complaint) => ({ key: complaint.complaintId, cells: [
+        complaint.complaintId,
+        complaint.dateReceived,
+        complaint.sourceType,
+        complaint.misconductType ?? "—",
+        <span key="description" className="line-clamp-2 max-w-md">{complaint.description}</span>,
+        complaint.linkedCaseCount,
+        <Button key="view" asChild variant="outline" size="sm"><Link href={`/integrity/complaints/${complaint.complaintId}`}>View</Link></Button>,
+      ] })} />
       <p className="flex items-center gap-2 text-xs text-[var(--text-muted)]"><ShieldAlert className="size-4" />A complaint may be linked to one or more integrity cases.</p>
     </>
   );

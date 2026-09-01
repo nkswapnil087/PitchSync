@@ -227,7 +227,20 @@ export type ComplaintRecord = {
   sourceType: string;
   dateReceived: string;
   description: string;
+  misconductType?: string;
   caseIds: readonly string[];
+  linkedCases?: readonly ComplaintCaseSummary[];
+};
+
+export type ComplaintCaseSummary = {
+  caseId: string;
+  status: string;
+  dateOpened: string;
+  referralStatus?: string;
+};
+
+export type ComplaintListItem = Omit<ComplaintRecord, "caseIds" | "linkedCases"> & {
+  linkedCaseCount: number;
 };
 
 export type RulebookRecord = {

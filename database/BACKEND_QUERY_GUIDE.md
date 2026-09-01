@@ -1096,7 +1096,93 @@ Expected result/change: Zero or more fielding performances. Read-only; no transa
 
 ## Integrity
 
-Queries will be added with the integrity integration checkpoint.
+### Complaint registry count
+
+Purpose: Count active complaints after text, source, and received-date filters.
+
+Frontend use: Complaint registry pagination.
+
+Source: Count companion to V003 catalogue query `Q11_list_complaints.sql`.
+
+SQL:
+
+```sql
+SELECT COUNT(*) AS total_items
+FROM complaint c
+WHERE c.is_deleted = 0
+  -- Optional bound complaint ID/description/misconduct search
+  -- Optional bound source-type contains filter
+  -- Optional received-from and received-to date bounds
+```
+
+Bind variables: Optional `search`, `source`, `fromDate`, and `toDate`.
+
+How it works: The API validates ISO dates and rejects inverted ranges before Oracle applies the bound filters.
+
+Expected result/change: One count row. Read-only; no transaction changes.
+
+### Paginated complaint registry
+
+Purpose: Return active complaints and their active linked-case counts.
+
+Frontend use: `/integrity/complaints` table, filters, sort, and pagination.
+
+Source: Extends V003 catalogue query `Q11_list_complaints.sql` with case-source counts and pagination.
+
+SQL:
+
+```sql
+SELECT c.complaint_id, c.source_type,
+       TO_CHAR(c.date_received, 'YYYY-MM-DD') AS date_received,
+       c.description, c.misconduct_type,
+       (SELECT COUNT(*)
+          FROM source_of s
+          JOIN case_record cr ON cr.case_id = s.case_id AND cr.is_deleted = 0
+         WHERE s.complaint_id = c.complaint_id AND s.is_deleted = 0) AS linked_case_count
+FROM complaint c
+WHERE c.is_deleted = 0
+  -- Optional documented filters
+ORDER BY /* one server-whitelisted expression: received, id, or source */
+OFFSET :rowOffset ROWS FETCH NEXT :rowLimit ROWS ONLY;
+```
+
+Bind variables: Optional registry-filter binds; required `rowOffset` and `rowLimit`.
+
+How it works: The supported `SOURCE_OF` relation supplies linked-case coverage while preserving one row per complaint.
+
+Expected result/change: Zero or more complaint rows. Read-only; no transaction changes.
+
+### Complaint detail with cases
+
+Purpose: Load one complaint and every active case for which it is a source.
+
+Frontend use: `/integrity/complaints/[complaintId]` description and Linked Cases section.
+
+Source: V003 catalogue query `Q12_complaint_details_with_case.sql` with API date formatting.
+
+SQL:
+
+```sql
+SELECT c.complaint_id, c.source_type,
+       TO_CHAR(c.date_received, 'YYYY-MM-DD') AS date_received,
+       c.misconduct_type, c.description, cr.case_id,
+       cr.status AS case_status,
+       TO_CHAR(cr.date_opened, 'YYYY-MM-DD') AS date_opened,
+       cr.referral_status
+FROM complaint c
+LEFT JOIN source_of s
+       ON s.complaint_id = c.complaint_id AND s.is_deleted = 0
+LEFT JOIN case_record cr
+       ON cr.case_id = s.case_id AND cr.is_deleted = 0
+WHERE c.complaint_id = :complaintId AND c.is_deleted = 0
+ORDER BY cr.date_opened, cr.case_id;
+```
+
+Bind variables: `complaintId`.
+
+How it works: Left joins retain a complaint that has no case yet; the server groups repeated complaint columns into one response with linked cases.
+
+Expected result/change: One or more rows for an active complaint, or no rows. Read-only; no transaction changes.
 
 ## Rulebook
 
