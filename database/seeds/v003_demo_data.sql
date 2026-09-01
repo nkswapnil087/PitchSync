@@ -384,28 +384,28 @@ VALUES (
 --------------------------------------------------------------------------------
 
 INSERT INTO user_account (person_id, username, password_hash, account_status)
-VALUES (200001, 'super.admin', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
+VALUES (200001, 'superadmin', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
 
 INSERT INTO user_account (person_id, username, password_hash, account_status)
-VALUES (200002, 'board.admin', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
+VALUES (200002, 'boardadmin', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
 
 INSERT INTO user_account (person_id, username, password_hash, account_status)
-VALUES (200003, 'performance.manager', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
+VALUES (200003, 'performancemanager', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
 
 INSERT INTO user_account (person_id, username, password_hash, account_status)
-VALUES (200004, 'match.official', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
+VALUES (200004, 'matchofficial', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
 
 INSERT INTO user_account (person_id, username, password_hash, account_status)
-VALUES (200005, 'integrity.nusrat', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
+VALUES (200005, 'integrity1', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
 
 INSERT INTO user_account (person_id, username, password_hash, account_status)
-VALUES (200006, 'integrity.rezaul', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
+VALUES (200006, 'integrity2', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
 
 INSERT INTO user_account (person_id, username, password_hash, account_status)
-VALUES (100001, 'player.arif', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
+VALUES (100001, 'player1', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
 
 INSERT INTO user_account (person_id, username, password_hash, account_status)
-VALUES (100004, 'player.farzana', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
+VALUES (100004, 'player2', 'UNUSABLE$SEED_ACCOUNT', 'DISABLED');
 
 
 --------------------------------------------------------------------------------

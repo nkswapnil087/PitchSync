@@ -9,14 +9,14 @@ const localEnvironmentPath = path.join(projectRoot, ".env.local");
 const credentialsPath = path.join(projectRoot, "DEMO_CREDENTIALS.txt");
 const approvedTarget = "localhost:1522/PITCHPDB";
 const accounts = [
-  ["Super Administrator", "super.admin"],
-  ["Cricket Board Administrator", "board.admin"],
-  ["Team Performance Manager", "performance.manager"],
-  ["Match Official", "match.official"],
-  ["Integrity & Compliance Officer", "integrity.nusrat"],
-  ["Integrity & Compliance Officer", "integrity.rezaul"],
-  ["Player", "player.arif"],
-  ["Player", "player.farzana"],
+  ["Super Administrator", "superadmin"],
+  ["Cricket Board Administrator", "boardadmin"],
+  ["Team Performance Manager", "performancemanager"],
+  ["Match Official", "matchofficial"],
+  ["Integrity & Compliance Officer", "integrity1"],
+  ["Integrity & Compliance Officer", "integrity2"],
+  ["Player", "player1"],
+  ["Player", "player2"],
 ];
 
 function parseEnvironment(source) {

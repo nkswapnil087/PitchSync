@@ -447,3 +447,21 @@ The documented bind-variable player write and audit statements in database/BACKE
 
 Result:
 Temporary player 100041 was created, read back with structured address and collection values, updated, and soft-deleted. Direct verification against PITCHSYNC_OWNER in PITCHPDB confirmed PERSON and PLAYER are deleted, all form-managed child rows are inactive, and exactly three PLAYER audit operations were recorded. The record remains only as soft-deleted audit history. No secrets were logged.
+
+Reason:
+Rename the eight local PitchSync application usernames while preserving every existing password hash.
+
+Type:
+UPDATE / INSERT AUDIT / AUTHENTICATION VERIFICATION
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+UPDATE user_account SET username = :newUsername WHERE account_id = :accountId;
+
+INSERT INTO audit_log (actor_person_id, entity_name, record_identifier, operation, old_values, new_values)
+VALUES (200001, 'USER_ACCOUNT', :recordIdentifier, 'UPDATE', :oldValues, :newValues);
+
+Result:
+Renamed the active accounts to superadmin, boardadmin, performancemanager, matchofficial, integrity1, integrity2, player1, and player2 on PITCHSYNC_OWNER in PITCHPDB. All eight password hashes were verified unchanged, all eight new username/role combinations authenticated successfully with the existing password, and the old super.admin username returned 401. No secrets were logged.
