@@ -1,17 +1,29 @@
 import { jwtVerify, SignJWT } from "jose";
+
 import { isRoleId } from "@/config/roles";
-import type { AuthSession } from "@/features/auth/types";
+import {
+  isIntegrityScope,
+  type AuthSession,
+} from "@/features/auth/types";
 
 export const SESSION_COOKIE = "pitchsync_session";
 export const SESSION_MAX_AGE_SECONDS = 8 * 60 * 60;
 
 function secretKey() {
   const secret = process.env.AUTH_SECRET;
-  if (!secret || secret.length < 32) throw new Error("Authentication secret is incomplete.");
+
+  if (!secret || secret.length < 32) {
+    throw new Error(
+      "Authentication secret is incomplete.",
+    );
+  }
+
   return new TextEncoder().encode(secret);
 }
 
-export async function createSessionToken(session: AuthSession) {
+export async function createSessionToken(
+  session: AuthSession,
+) {
   return new SignJWT({ ...session })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -19,12 +31,54 @@ export async function createSessionToken(session: AuthSession) {
     .sign(secretKey());
 }
 
-export async function verifySessionToken(token: string | undefined): Promise<AuthSession | null> {
-  if (!token) return null;
+export async function verifySessionToken(
+  token: string | undefined,
+): Promise<AuthSession | null> {
+  if (!token) {
+    return null;
+  }
+
   try {
-    const { payload } = await jwtVerify(token, secretKey(), { algorithms: ["HS256"] });
-    if (typeof payload.accountId !== "string" || typeof payload.personId !== "string" || typeof payload.username !== "string" || typeof payload.fullName !== "string" || !isRoleId(payload.role)) return null;
-    return { accountId: payload.accountId, personId: payload.personId, username: payload.username, fullName: payload.fullName, role: payload.role };
+    const { payload } = await jwtVerify(
+      token,
+      secretKey(),
+      {
+        algorithms: ["HS256"],
+      },
+    );
+
+    if (
+      typeof payload.accountId !== "string" ||
+      typeof payload.personId !== "string" ||
+      typeof payload.username !== "string" ||
+      typeof payload.fullName !== "string" ||
+      !isRoleId(payload.role)
+    ) {
+      return null;
+    }
+
+    if (payload.role === "integrity-officer") {
+      if (!isIntegrityScope(payload.integrityScope)) {
+        return null;
+      }
+
+      return {
+        accountId: payload.accountId,
+        personId: payload.personId,
+        username: payload.username,
+        fullName: payload.fullName,
+        role: payload.role,
+        integrityScope: payload.integrityScope,
+      };
+    }
+
+    return {
+      accountId: payload.accountId,
+      personId: payload.personId,
+      username: payload.username,
+      fullName: payload.fullName,
+      role: payload.role,
+    };
   } catch {
     return null;
   }

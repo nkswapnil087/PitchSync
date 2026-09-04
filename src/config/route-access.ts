@@ -39,6 +39,9 @@ export const routeAccess: Readonly<Record<string, readonly RoleId[]>> = {
   "/integrity/cases/[caseId]": [...integrityRoles],
   "/integrity/rulebook": [...integrityRoles],
   "/integrity/rulebook/[ruleId]": [...integrityRoles],
+  "/super-admin/integrity-officers": [
+  "super-admin",
+],
 };
 
 const dynamicRoutePatterns: readonly [RegExp, string][] = [

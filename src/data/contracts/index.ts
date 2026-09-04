@@ -246,6 +246,15 @@ export type MatchListItem = {
   status: string;
 };
 
+export type IntegrityOfficerListItem = {
+  adminId: string;
+  fullName: string;
+  email: string;
+  department: string;
+  accessScope: "MANAGER" | "INVESTIGATOR" | null;
+  accountStatus: string | null;
+};
+
 export type ComplaintRecord = {
   complaintId: string;
   sourceType: string;

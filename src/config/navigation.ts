@@ -8,6 +8,7 @@ import {
   Gauge,
   Medal,
   ShieldAlert,
+  ShieldCheck,
   Trophy,
   UserRound,
   UsersRound,
@@ -42,6 +43,7 @@ export const navigationByRole: Record<RoleId, readonly NavigationItem[]> = {
     complaints,
     cases,
     rulebook,
+    { label: "Integrity Officers", href: "/super-admin/integrity-officers", icon: ShieldCheck },
     reports,
   ],
   "board-admin": [

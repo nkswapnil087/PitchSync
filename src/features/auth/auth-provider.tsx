@@ -9,7 +9,10 @@ type AuthContextValue = {
   signedIn: boolean;
   role: RoleId | null;
   hydrated: boolean;
-  signIn: (identifier: string, password: string, role: RoleId) => Promise<SignInResult>;
+signIn: (
+  identifier: string,
+  password: string,
+) => Promise<SignInResult>;
   signOut: () => Promise<void>;
 };
 
@@ -35,14 +38,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => controller.abort();
   }, []);
 
-  const signIn = useCallback(async (identifier: string, password: string, role: RoleId): Promise<SignInResult> => {
-    const response = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ identifier, password, role }) });
-    const body = await response.json() as { data?: AuthSession; error?: string };
-    if (!response.ok || !body.data) return { ok: false, error: body.error ?? "Unable to sign in." };
+  const signIn = useCallback(
+  async (
+    identifier: string,
+    password: string,
+  ): Promise<SignInResult> => {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        identifier,
+        password,
+      }),
+    });
+
+    const body = await response.json() as {
+      data?: AuthSession;
+      error?: string;
+    };
+
+    if (!response.ok || !body.data) {
+      return {
+        ok: false,
+        error: body.error ?? "Unable to sign in.",
+      };
+    }
+
     setSession(body.data);
     setHydrated(true);
-    return { ok: true, session: body.data };
-  }, []);
+
+    return {
+      ok: true,
+      session: body.data,
+    };
+  },
+  [],
+);
 
   const signOut = useCallback(async () => {
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);

@@ -20,6 +20,20 @@ function apiFrontendRoute(pathname: string) {
   if (/^\/api\/integrity\/cases\/[^/]+$/.test(pathname)) return "/integrity/cases/[caseId]";
   if (pathname === "/api/integrity/rulebook") return "/integrity/rulebook";
   if (/^\/api\/integrity\/rulebook\/[^/]+$/.test(pathname)) return "/integrity/rulebook/[ruleId]";
+  if (
+  pathname ===
+  "/api/super-admin/integrity-officers"
+) {
+  return "/super-admin/integrity-officers";
+}
+
+if (
+  /^\/api\/super-admin\/integrity-officers\/[^/]+\/scope$/.test(
+    pathname,
+  )
+) {
+  return "/super-admin/integrity-officers";
+}
   return null;
 }
 
