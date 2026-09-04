@@ -1,0 +1,108 @@
+PitchSync Project Update Guide
+Member: Riddita
+Role: Player
+
+Your role in simple words
+-------------------------
+You have the easiest role.
+You explain what a player sees after logging in.
+A player can mainly see their own dashboard and own player-related information.
+
+Login account to test
+---------------------
+Use this:
+
+username: player1
+password: pplayer1
+
+Select role: Player
+
+You can also test:
+
+username: player2
+password: pplayer2
+
+Select role: Player
+
+What to explain first
+---------------------
+Explain that the Player role is limited.
+The player should not see full admin records.
+The player should only see allowed player-related pages.
+
+Your frontend study paths
+-------------------------
+Open and study these:
+
+D:\PROJECTS\PitchSync\src\app\(portal)\player
+D:\PROJECTS\PitchSync\src\features\dashboards\player-dashboard.tsx
+D:\PROJECTS\PitchSync\src\features\players
+
+Useful frontend files:
+D:\PROJECTS\PitchSync\src\features\players\player-profile.tsx
+D:\PROJECTS\PitchSync\src\features\players\player-registry.tsx
+
+What to inspect in frontend
+---------------------------
+- Login as player1.
+- See the player dashboard.
+- Check what sidebar options are visible.
+- Understand that player data is personal/restricted.
+- Open player profile-related UI.
+
+Do not worry too much about:
+- Admin-level pages.
+- Super admin settings.
+- Integrity cases.
+- Complex player registration form.
+
+Your backend/API study paths
+----------------------------
+Open and study these:
+
+D:\PROJECTS\PitchSync\src\app\api\dashboard\route.ts
+D:\PROJECTS\PitchSync\src\app\api\players
+
+D:\PROJECTS\PitchSync\src\lib\db\queries\dashboard.ts
+D:\PROJECTS\PitchSync\src\lib\db\queries\players.ts
+
+What to inspect in backend
+--------------------------
+- dashboard\route.ts gives dashboard data based on logged-in role.
+- api\players gives player data.
+- players.ts contains database query logic for player records.
+- Route guarding helps stop a player from opening another role's pages.
+
+Database tables to study
+------------------------
+Search these table names in:
+D:\PROJECTS\PitchSync\database\migrations\V003_create_final_schema.sql
+D:\PROJECTS\PitchSync\database\BACKEND_QUERY_GUIDE.md
+
+Tables:
+- PERSON
+- PLAYER
+- USER_ACCOUNT
+- CAREER_RECORD
+- MATCH_PERFORMANCE
+
+How to study quickly
+--------------------
+1. Login as player1.
+2. Open the player dashboard.
+3. Notice what the player can see.
+4. Try to understand that access is limited to player role.
+5. Open player-dashboard.tsx.
+6. Open players.ts.
+7. Search PLAYER and PERSON in the schema file.
+
+Simple teacher explanation
+--------------------------
+"My part is the Player role. This is a limited role. A player logs in and can see their own dashboard and player-related information. The frontend is inside src\app\(portal)\player and src\features\players. The backend API is inside src\app\api\players, and the query logic is inside src\lib\db\queries\players.ts. The main database tables are PERSON, PLAYER, USER_ACCOUNT, CAREER_RECORD, and MATCH_PERFORMANCE."
+
+Important points to remember
+----------------------------
+- Player is the simplest role.
+- Main idea: own data, limited access.
+- You do not need to explain all admin modules.
+- Keep it short and confident.

@@ -60,33 +60,6 @@ function parseEnvironment(source) {
 }
 
 /**
- * Read previously generated passwords from DEMO_CREDENTIALS.txt.
- *
- * Expected line format:
- * Super Administrator: superadmin | Password: examplePassword
- */
-function passwordsFromCredentials(source) {
-  const passwords = new Map();
-
-  for (const rawLine of source.split(/\r?\n/)) {
-    const line = rawLine.trim();
-
-    const match = line.match(
-      /^.+?:\s+(\S+)\s+\|\s+Password:\s+(.+)$/
-    );
-
-    if (match) {
-      const username = match[1];
-      const password = match[2].trim();
-
-      passwords.set(username, password);
-    }
-  }
-
-  return passwords;
-}
-
-/**
  * Load .env.local.
  */
 const environment = parseEnvironment(
@@ -134,26 +107,12 @@ if (
 }
 
 /**
- * Reuse passwords already stored in DEMO_CREDENTIALS.txt,
- * if the file exists.
- */
-const savedPasswords = passwordsFromCredentials(
-  await readFile(credentialsPath, "utf8").catch(() => "")
-);
-
-/**
- * Optional fallback password supplied through the environment.
- */
-const fallbackPassword =
-  environment.get("PITCHSYNC_APP_PASSWORD")?.trim() ||
-  process.env.PITCHSYNC_APP_PASSWORD?.trim();
-/**
- * Determine a password for every demo account.
+ * Determine a simple local password for every course/demo account.
  */
 const accountPasswords = accounts.map(([role, username]) => [
   role,
   username,
-  savedPasswords.get(username) || fallbackPassword || "",
+  `p${username}`,
 ]);
 
 /**
@@ -167,8 +126,7 @@ if (
   throw new Error(
     "Each local application account requires a password " +
       "of at least 8 characters. " +
-      "Provide passwords in DEMO_CREDENTIALS.txt or set " +
-      "PITCHSYNC_APP_PASSWORD."
+      "Check the local account username list."
   );
 }
 

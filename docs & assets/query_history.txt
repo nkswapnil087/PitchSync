@@ -484,3 +484,77 @@ WHERE username = :username;
 
 Result:
 Updated the password hashes for superadmin, boardadmin, performancemanager, matchofficial, integrity1, integrity2, player1, and player2 on PITCHSYNC_OWNER in PITCHPDB. All eight username/role combinations authenticated successfully through /api/auth/login, and a negative login using the superadmin username without the required local password prefix returned 401. Exact password values and hashes were not logged.
+
+Reason:
+Refresh the local Oracle 19c PITCHSYNC_OWNER schema after pulling the latest project database files from origin/main.
+
+Type:
+SELECT / DROP / CREATE / INSERT / MERGE / VERIFICATION
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+Read-only preflight:
+SELECT SYS_CONTEXT('USERENV','SESSION_USER') AS session_user,
+       SYS_CONTEXT('USERENV','CON_NAME') AS container_name,
+       SYS_CONTEXT('USERENV','SERVICE_NAME') AS service_name
+FROM dual;
+
+SELECT username, account_status, default_tablespace, temporary_tablespace
+FROM dba_users
+WHERE username = 'PITCHSYNC_OWNER';
+
+SELECT object_type, COUNT(*) AS object_count
+FROM dba_objects
+WHERE owner = 'PITCHSYNC_OWNER'
+GROUP BY object_type
+ORDER BY object_type;
+
+SELECT table_name
+FROM dba_tables
+WHERE owner = 'PITCHSYNC_OWNER'
+ORDER BY table_name;
+
+SELECT COUNT(*) checks for each existing PITCHSYNC_OWNER table.
+
+Cleanup:
+DROP TABLE PITCHSYNC_OWNER."<existing_table>" CASCADE CONSTRAINTS PURGE;
+DROP SEQUENCE PITCHSYNC_OWNER."<existing_sequence>";
+DROP VIEW/PROCEDURE/FUNCTION/PACKAGE/PACKAGE BODY/TRIGGER PITCHSYNC_OWNER."<existing_object>";
+DROP TYPE PITCHSYNC_OWNER."<existing_type>" FORCE;
+
+Deployment:
+The unchanged creation section of database/migrations/V003_create_final_schema.sql, beginning with CREATE TYPE ADDRESS_TYPE. The DROP preamble was skipped because the schema had already been explicitly cleaned.
+
+@database/indexes/create_indexes.sql
+@database/triggers/trg_person_dob_valid.sql
+@database/triggers/trg_investigates_admin_role.sql
+@database/seeds/v003_demo_data.sql
+@database/migrations/V004__integrity_officer_access.sql
+@database/seeds/V004__seed_integrity_access.sql
+
+Verification:
+DBA metadata checks for table names, object counts, invalid objects, explicit indexes, triggers, row counts, and total row count. The current V003 query catalogue was executed with @database/tests/run_v003_queries.sql after setting CURRENT_SCHEMA to PITCHSYNC_OWNER.
+
+Result:
+Preflight confirmed Oracle Database 19c, PITCHPDB open read/write, and PITCHSYNC_OWNER present. The previous schema contained 43 tables and 203 rows: older PitchSync tables including INTEGRITY_CASE, missing V003 USER_ACCOUNT and CASE_RECORD, plus unrelated banking/sample tables including ACCOUNT, BRANCH, CUSTOMER, LOAN, and EMPLOYEE. The local owner was rebuilt to the pulled project version. Final state: 33 tables, 2 object types, 2 triggers, 15 explicit indexes, 0 invalid objects, 228 total rows, V003 USER_ACCOUNT present with 8 disabled seed accounts, V003 CASE_RECORD present, and V004 INTEGRITY_OFFICER_ACCESS present with 2 rows. All current V003 catalogue queries executed successfully. No credentials, password hashes, or private values were logged.
+
+Reason:
+Refresh the eight local PitchSync application account password hashes to the simplified per-account classroom credential pattern.
+
+Type:
+UPDATE / AUTHENTICATION VERIFICATION
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+UPDATE user_account
+SET password_hash = :passwordHash,
+    account_status = 'ACTIVE',
+    is_deleted = 0
+WHERE username = :username;
+
+Result:
+Updated the password hashes for superadmin, boardadmin, performancemanager, matchofficial, integrity1, integrity2, player1, and player2 on PITCHSYNC_OWNER in PITCHPDB. All eight username combinations authenticated successfully through /api/auth/login after the refresh. Exact password values and hashes were not logged.

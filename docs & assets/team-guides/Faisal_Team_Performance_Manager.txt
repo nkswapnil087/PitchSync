@@ -1,0 +1,101 @@
+PitchSync Project Update Guide
+Member: Faisal
+Role: Team Performance Manager
+
+Your role in simple words
+-------------------------
+You explain the performance part of PitchSync.
+This role focuses on player career data, batting, bowling, fielding, and match performance.
+It is more about analysis than administration.
+
+Login account to test
+---------------------
+username: performancemanager
+password: pperformancemanager
+
+Select role: Team Performance Manager
+
+What to explain first
+---------------------
+Explain that a Team Performance Manager studies player performance records.
+This role helps track career statistics and format-wise summaries.
+The goal is to support cricket performance analysis.
+
+Your frontend study paths
+-------------------------
+Open and study these:
+
+D:\PROJECTS\PitchSync\src\app\(portal)\performance
+D:\PROJECTS\PitchSync\src\features\dashboards\performance-dashboard.tsx
+D:\PROJECTS\PitchSync\src\features\performance
+
+Specific pages:
+D:\PROJECTS\PitchSync\src\app\(portal)\performance\dashboard
+D:\PROJECTS\PitchSync\src\app\(portal)\performance\players
+D:\PROJECTS\PitchSync\src\app\(portal)\performance\players\[playerId]
+
+Useful frontend files:
+D:\PROJECTS\PitchSync\src\features\performance\player-performance-registry.tsx
+D:\PROJECTS\PitchSync\src\features\performance\player-performance-details.tsx
+
+What to inspect in frontend
+---------------------------
+- Performance dashboard.
+- Player performance registry.
+- Player performance details.
+- Filters/search if present.
+- Batting, bowling, fielding, and career sections.
+
+Your backend/API study paths
+----------------------------
+Open and study these:
+
+D:\PROJECTS\PitchSync\src\app\api\dashboard\route.ts
+D:\PROJECTS\PitchSync\src\app\api\performance
+
+D:\PROJECTS\PitchSync\src\lib\db\queries\dashboard.ts
+D:\PROJECTS\PitchSync\src\lib\db\queries\performance.ts
+
+What to inspect in backend
+--------------------------
+- dashboard\route.ts loads dashboard summary data.
+- api\performance loads performance registry and detail data.
+- performance.ts contains the performance-related database query logic.
+- dashboard.ts may include dashboard totals for performance.
+
+Database tables to study
+------------------------
+Search these table names in:
+D:\PROJECTS\PitchSync\database\migrations\V003_create_final_schema.sql
+D:\PROJECTS\PitchSync\database\BACKEND_QUERY_GUIDE.md
+
+Tables:
+- PLAYER
+- PERSON
+- CAREER_RECORD
+- BATTING_SUMMARY
+- BOWLING_SUMMARY
+- FIELDING_SUMMARY
+- MATCH_PERFORMANCE
+- MATCH
+
+How to study quickly
+--------------------
+1. Login as performancemanager.
+2. Open the performance dashboard.
+3. Open performance player list.
+4. Open one player performance details page.
+5. Identify batting, bowling, fielding, and career data.
+6. Open performance.ts and see the functions/queries.
+7. Search the performance table names in schema and query guide.
+
+Simple teacher explanation
+--------------------------
+"My part is Team Performance Manager. This role checks player performance and career data. The frontend is inside src\app\(portal)\performance and src\features\performance. The backend API is inside src\app\api\performance. The database query logic is inside src\lib\db\queries\performance.ts. The main tables are PLAYER, CAREER_RECORD, BATTING_SUMMARY, BOWLING_SUMMARY, FIELDING_SUMMARY, MATCH_PERFORMANCE, and MATCH."
+
+Important points to remember
+----------------------------
+- This role is not mainly about adding admin records.
+- It is about reading and analyzing performance.
+- Mention dashboard summary plus player-level performance details.
+- Keep the explanation focused on statistics and cricket performance.

@@ -1,0 +1,119 @@
+PitchSync Project Update Guide
+Member: Shupti
+Role: Integrity & Compliance Officer
+
+Your role in simple words
+-------------------------
+You explain the integrity and compliance part.
+This role handles complaints, integrity cases, and rulebook information.
+It deals with sensitive/restricted cricket integrity data.
+
+Login accounts to test
+----------------------
+You can use either:
+
+username: integrity1
+password: pintegrity1
+
+or
+
+username: integrity2
+password: pintegrity2
+
+Select role: Integrity & Compliance Officer
+
+What to explain first
+---------------------
+Explain that integrity data should not be open to every user.
+Only authorized integrity officers can access complaint and case-related pages.
+The system also supports restricted access through integrity officer access rules.
+
+Your frontend study paths
+-------------------------
+Open and study these:
+
+D:\PROJECTS\PitchSync\src\app\(portal)\integrity
+D:\PROJECTS\PitchSync\src\features\dashboards\integrity-dashboard.tsx
+D:\PROJECTS\PitchSync\src\features\integrity
+
+Specific pages:
+D:\PROJECTS\PitchSync\src\app\(portal)\integrity\dashboard
+D:\PROJECTS\PitchSync\src\app\(portal)\integrity\complaints
+D:\PROJECTS\PitchSync\src\app\(portal)\integrity\cases
+D:\PROJECTS\PitchSync\src\app\(portal)\integrity\rulebook
+
+What to inspect in frontend
+---------------------------
+- Integrity dashboard.
+- Complaint list and complaint details.
+- Case list and case details.
+- Rulebook list and rulebook details.
+- Confidentiality notice component.
+- Empty/loading/error states if data is not available.
+
+Useful frontend files:
+D:\PROJECTS\PitchSync\src\features\integrity\complaint-registry.tsx
+D:\PROJECTS\PitchSync\src\features\integrity\complaint-details.tsx
+D:\PROJECTS\PitchSync\src\features\integrity\integrity-case-registry.tsx
+D:\PROJECTS\PitchSync\src\features\integrity\integrity-case-details.tsx
+D:\PROJECTS\PitchSync\src\features\integrity\rulebook-registry.tsx
+D:\PROJECTS\PitchSync\src\features\integrity\rulebook-details.tsx
+D:\PROJECTS\PitchSync\src\features\integrity\confidentiality-notice.tsx
+
+Your backend/API study paths
+----------------------------
+Open and study these:
+
+D:\PROJECTS\PitchSync\src\app\api\dashboard\route.ts
+D:\PROJECTS\PitchSync\src\app\api\integrity
+
+D:\PROJECTS\PitchSync\src\lib\db\queries\complaints.ts
+D:\PROJECTS\PitchSync\src\lib\db\queries\cases.ts
+D:\PROJECTS\PitchSync\src\lib\db\queries\rulebook.ts
+D:\PROJECTS\PitchSync\src\lib\auth\integrity-access.ts
+
+What to inspect in backend
+--------------------------
+- api\integrity\complaints gives complaint data.
+- api\integrity\cases gives case data.
+- api\integrity\rulebook gives rulebook data.
+- integrity-access.ts helps explain restricted access for integrity officers.
+- Query files show how data is fetched from Oracle.
+
+Database tables to study
+------------------------
+Search these table names in:
+D:\PROJECTS\PitchSync\database\migrations\V003_create_final_schema.sql
+D:\PROJECTS\PitchSync\database\BACKEND_QUERY_GUIDE.md
+
+Tables:
+- COMPLAINT
+- CASE_RECORD
+- RULEBOOK
+- INVESTIGATES
+- INTEGRITY_OFFICER_ACCESS
+- ADMIN
+- PERSON
+- USER_ACCOUNT
+
+How to study quickly
+--------------------
+1. Login as integrity1 or integrity2.
+2. Open the integrity dashboard.
+3. Visit complaints, cases, and rulebook pages.
+4. Understand what each page is for.
+5. Open the matching frontend feature files.
+6. Open the matching API folder.
+7. Open complaints.ts, cases.ts, and rulebook.ts.
+8. Search the table names in the schema.
+
+Simple teacher explanation
+--------------------------
+"My part is Integrity & Compliance Officer. This role handles sensitive complaint, case, and rulebook data. The frontend pages are inside src\app\(portal)\integrity and the reusable components are inside src\features\integrity. The backend API routes are inside src\app\api\integrity. The SQL/query logic is inside complaints.ts, cases.ts, and rulebook.ts. The main database tables are COMPLAINT, CASE_RECORD, RULEBOOK, INVESTIGATES, and INTEGRITY_OFFICER_ACCESS."
+
+Important points to remember
+----------------------------
+- Mention confidentiality/restricted access.
+- Do not explain this like normal public data.
+- This role is about integrity management and compliance.
+- Access control is an important part of this role.

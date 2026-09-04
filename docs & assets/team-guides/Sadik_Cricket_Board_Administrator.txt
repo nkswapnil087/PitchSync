@@ -1,0 +1,119 @@
+PitchSync Project Update Guide
+Member: Sadik
+Role: Cricket Board Administrator
+
+Your role in simple words
+-------------------------
+You explain the board administrator role.
+This role handles official cricket administration records like players, teams, tournaments, and matches.
+
+Login account to test
+---------------------
+username: boardadmin
+password: pboardadmin
+
+Select role: Cricket Board Administrator
+
+What to explain first
+---------------------
+Explain that the Cricket Board Administrator is responsible for managing the main cricket records of the system.
+This role is broader than a player or match official because it connects player, team, tournament, and match areas.
+
+Your frontend study paths
+-------------------------
+Open and study these:
+
+D:\PROJECTS\PitchSync\src\app\(portal)\board-admin
+D:\PROJECTS\PitchSync\src\features\dashboards\board-admin-dashboard.tsx
+
+D:\PROJECTS\PitchSync\src\features\players
+D:\PROJECTS\PitchSync\src\features\teams
+D:\PROJECTS\PitchSync\src\features\tournaments
+D:\PROJECTS\PitchSync\src\features\matches
+
+D:\PROJECTS\PitchSync\src\app\(portal)\players
+D:\PROJECTS\PitchSync\src\app\(portal)\teams
+D:\PROJECTS\PitchSync\src\app\(portal)\tournaments
+D:\PROJECTS\PitchSync\src\app\(portal)\matches
+
+What to inspect in frontend
+---------------------------
+- Board admin dashboard.
+- Player registry page.
+- Player registration form if available.
+- Team registry and team details.
+- Tournament registry and tournament details.
+- Match registry and match details.
+- Sidebar items available for board admin.
+
+Focus on what the teacher may ask:
+- How are records shown?
+- Which page shows list data?
+- Which page shows detail data?
+- Which form validates input?
+- What can this role access?
+
+Your backend/API study paths
+----------------------------
+Open and study these:
+
+D:\PROJECTS\PitchSync\src\app\api\dashboard\route.ts
+D:\PROJECTS\PitchSync\src\app\api\players
+D:\PROJECTS\PitchSync\src\app\api\teams
+D:\PROJECTS\PitchSync\src\app\api\tournaments
+D:\PROJECTS\PitchSync\src\app\api\matches
+
+D:\PROJECTS\PitchSync\src\lib\db\queries\dashboard.ts
+D:\PROJECTS\PitchSync\src\lib\db\queries\players.ts
+D:\PROJECTS\PitchSync\src\lib\db\queries\teams.ts
+D:\PROJECTS\PitchSync\src\lib\db\queries\tournaments.ts
+D:\PROJECTS\PitchSync\src\lib\db\queries\matches.ts
+D:\PROJECTS\PitchSync\src\lib\db\queries\player-writes.ts
+
+What to inspect in backend
+--------------------------
+- API folders map to frontend modules.
+- api\players handles player list/detail/create/update.
+- api\teams handles team list/detail.
+- api\tournaments handles tournament list/detail.
+- api\matches handles match list/detail.
+- Query files hold the SQL logic.
+- player-writes.ts is useful if teacher asks about saving/updating player records.
+
+Database tables to study
+------------------------
+Search these table names in:
+D:\PROJECTS\PitchSync\database\migrations\V003_create_final_schema.sql
+D:\PROJECTS\PitchSync\database\BACKEND_QUERY_GUIDE.md
+
+Tables:
+- PERSON
+- PLAYER
+- ADMIN
+- USER_ACCOUNT
+- TEAM
+- TOURNAMENT
+- MATCH
+- TEAM_PLAYER / player-team relation if present
+- MATCH_PERFORMANCE
+
+How to study quickly
+--------------------
+1. Login as boardadmin.
+2. Open the dashboard.
+3. Visit players, teams, tournaments, and matches.
+4. For each module, remember list page + detail page.
+5. Open the matching API folder.
+6. Open the matching query file.
+7. Search the table names in the schema.
+
+Simple teacher explanation
+--------------------------
+"My part is Cricket Board Administrator. This role handles the main cricket administration records: players, teams, tournaments, and matches. The frontend pages are under src\app\(portal) and the reusable UI modules are under src\features. The backend API routes are under src\app\api, and database query logic is inside src\lib\db\queries. The main database tables are PERSON, PLAYER, TEAM, TOURNAMENT, MATCH, ADMIN, and USER_ACCOUNT."
+
+Important points to remember
+----------------------------
+- This is one of the broadest roles.
+- Keep explanation high-level and module-based.
+- Do not try to memorize every field.
+- Focus on how frontend, API, query file, and database table connect.

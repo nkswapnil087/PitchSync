@@ -1,0 +1,109 @@
+PitchSync Project Update Guide
+Member: Swapnil
+Roles: Super Administrator + Match Official
+
+Why you got 2 roles
+-------------------
+You are covering 2 roles, but the workload is balanced:
+- Super Administrator is mainly about high-level control and role/access explanation.
+- Match Official is mostly about match records and match dashboard flow.
+
+Login accounts to test
+----------------------
+Super Administrator:
+username: superadmin
+password: psuperadmin
+
+Match Official:
+username: matchofficial
+password: pmatchofficial
+
+Always select the matching role on the sign-in page.
+
+What to explain first
+---------------------
+Explain that PitchSync has role-based access. A user logs in with username, password, and role.
+After login, the user is sent directly to that role's dashboard.
+Each role can only access allowed pages.
+
+Your frontend study paths
+-------------------------
+Open and study these:
+
+D:\PROJECTS\PitchSync\src\app\(portal)\super-admin
+D:\PROJECTS\PitchSync\src\features\dashboards\super-admin-dashboard.tsx
+D:\PROJECTS\PitchSync\src\features\super-admin
+
+D:\PROJECTS\PitchSync\src\app\(portal)\match-official
+D:\PROJECTS\PitchSync\src\features\dashboards\match-official-dashboard.tsx
+D:\PROJECTS\PitchSync\src\features\matches
+
+What to inspect in frontend
+---------------------------
+For Super Administrator:
+- Open the super admin dashboard page.
+- See what cards/sections are shown.
+- Check integrity officer oversight.
+- Understand that this role is for system-level monitoring.
+
+For Match Official:
+- Open the match official dashboard.
+- Open match registry and match details.
+- Understand how match records are displayed.
+- Focus on match status, teams, tournament link, scorecard/performance information.
+
+Your backend/API study paths
+----------------------------
+Open and study these:
+
+D:\PROJECTS\PitchSync\src\app\api\dashboard\route.ts
+D:\PROJECTS\PitchSync\src\app\api\super-admin
+D:\PROJECTS\PitchSync\src\app\api\matches
+D:\PROJECTS\PitchSync\src\lib\db\queries\dashboard.ts
+D:\PROJECTS\PitchSync\src\lib\db\queries\matches.ts
+D:\PROJECTS\PitchSync\src\lib\db\queries\integrity-access.ts
+
+What to inspect in backend
+--------------------------
+- dashboard\route.ts decides dashboard data based on logged-in role.
+- api\super-admin is for super admin-only actions.
+- api\matches is used to fetch match list and match detail data.
+- queries\matches.ts contains SQL-related query logic for matches.
+- queries\integrity-access.ts is useful for explaining super admin integrity oversight.
+
+Database tables to study
+------------------------
+Search these table names in:
+D:\PROJECTS\PitchSync\database\migrations\V003_create_final_schema.sql
+D:\PROJECTS\PitchSync\database\BACKEND_QUERY_GUIDE.md
+
+Tables:
+- PERSON
+- ADMIN
+- USER_ACCOUNT
+- INTEGRITY_OFFICER_ACCESS
+- MATCH
+- TEAM
+- TOURNAMENT
+- MATCH_PERFORMANCE
+- AUDIT_LOG
+
+How to study quickly
+--------------------
+1. Login as superadmin and visit the dashboard.
+2. Note what pages are available from the sidebar.
+3. Open the frontend files and match them with what you see in browser.
+4. Open the API route files and see which query file they call.
+5. Login as matchofficial and repeat for match pages.
+6. Search the database tables in the schema file.
+
+Simple teacher explanation
+--------------------------
+"My part is Super Administrator and Match Official. Super Administrator is the highest-level role and can monitor admin-related areas like integrity officer oversight. Match Official focuses on match records. The frontend pages are inside the portal folders and feature folders. The backend uses API routes under src\app\api, and the actual SQL/query logic is inside src\lib\db\queries. The database tables mainly include ADMIN, USER_ACCOUNT, MATCH, TEAM, TOURNAMENT, and MATCH_PERFORMANCE."
+
+Important points to remember
+----------------------------
+- Do not say the frontend directly connects to Oracle.
+- Browser calls Next.js API routes.
+- API routes use server-side database query files.
+- Role access is controlled before pages/API data are shown.
