@@ -23,7 +23,13 @@ export async function POST(request: Request) {
     const session = { accountId: account.accountId, personId: account.personId, username: account.username, fullName: account.fullName, role: account.role, ...(account.integrityScope ? { integrityScope: account.integrityScope } : {}) };
     const token = await createSessionToken(session);
     const response = NextResponse.json({ data: session });
-    response.cookies.set(SESSION_COOKIE, token, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: SESSION_MAX_AGE_SECONDS });
+    response.cookies.set(SESSION_COOKIE, token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: new URL(request.url).protocol === "https:",
+      path: "/",
+      maxAge: SESSION_MAX_AGE_SECONDS,
+    });
     return response;
   } catch (error) {
     logServerError("sign in", error);

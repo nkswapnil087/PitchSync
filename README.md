@@ -42,7 +42,7 @@ Start the application:
 npm run dev
 ```
 
-Open `http://localhost:3000/sign-in` and use a matching username, password, and role from `DEMO_CREDENTIALS.txt`. Never commit either credentials file or any `.env` file.
+Open `http://localhost:3000/sign-in` and use a matching username and password from `DEMO_CREDENTIALS.txt`. The account's role is resolved automatically. Never commit either credentials file or any `.env` file.
 
 ## Production-style verification
 
