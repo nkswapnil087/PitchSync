@@ -558,3 +558,33 @@ WHERE username = :username;
 
 Result:
 Updated the password hashes for superadmin, boardadmin, performancemanager, matchofficial, integrity1, integrity2, player1, and player2 on PITCHSYNC_OWNER in PITCHPDB. All eight username combinations authenticated successfully through /api/auth/login after the refresh. Exact password values and hashes were not logged.
+
+Reason:
+Grant the minimum schema privileges required by database/project-update-2 and deploy its function, view, procedure, and PL/SQL demonstrations.
+
+Type:
+GRANT / CREATE OR REPLACE / SELECT / PL/SQL / VERIFICATION
+
+Status:
+EXECUTED SUCCESSFULLY
+
+SQL:
+Administrator preflight confirmed SYS in CDB$ROOT and PITCHPDB open READ WRITE.
+
+ALTER SESSION SET CONTAINER=PITCHPDB;
+GRANT CREATE PROCEDURE TO PITCHSYNC_OWNER;
+GRANT CREATE VIEW TO PITCHSYNC_OWNER;
+
+@database/project-update-2/99_run_all.sql
+
+SELECT object_name, object_type, status
+FROM user_objects
+WHERE object_name IN (
+    'PU2_FN_PLAYER_TOTAL_RUNS',
+    'PU2_V_PLAYER_CAREER_OVERVIEW',
+    'PU2_PR_PLAYER_SUMMARY'
+)
+ORDER BY object_type, object_name;
+
+Result:
+The grants were applied only in PITCHPDB. The project-update-2 master script completed as PITCHSYNC_OWNER. PU2_FN_PLAYER_TOTAL_RUNS, PU2_V_PLAYER_CAREER_OVERVIEW, and PU2_PR_PLAYER_SUMMARY were created and verified VALID. The cursor and exception-handling demonstration blocks also completed successfully. No credentials or password values were logged.
